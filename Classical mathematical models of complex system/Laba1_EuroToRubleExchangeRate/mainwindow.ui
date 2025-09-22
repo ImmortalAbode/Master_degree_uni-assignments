@@ -1,0 +1,629 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1000</width>
+    <height>700</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_3">
+    <item row="0" column="0">
+     <widget class="QFrame" name="frame_title">
+      <property name="styleSheet">
+       <string notr="true">QFrame {
+	background-color: #CCD6E9;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+}</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_Task">
+         <property name="font">
+          <font>
+           <family>Times New Roman</family>
+           <pointsize>12</pointsize>
+           <italic>true</italic>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+	background-color: #909CBE;
+	color: white;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+	padding: 5px 10px;
+}</string>
+         </property>
+         <property name="text">
+          <string>Моделирование роста курса Евро к Рублю</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_Laba1">
+         <property name="font">
+          <font>
+           <family>Times New Roman</family>
+           <pointsize>16</pointsize>
+           <italic>false</italic>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+	background-color: #9595CD;
+	background: qlineargradient(
+        x1:0, y1:0, x2:1, y2:1,
+        stop:0 #3498DB,		  
+        stop:1 #9B59B6			
+    );
+	color: white;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+	padding: 10px 10px;
+}</string>
+         </property>
+         <property name="text">
+          <string>Лабораторная работа №1</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_uploadedFile">
+      <property name="font">
+       <font>
+        <family>Times New Roman</family>
+        <pointsize>10</pointsize>
+        <italic>true</italic>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLabel {
+	background-color: #909CBE;
+	color: white;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+	padding: 5px 10px;
+}</string>
+      </property>
+      <property name="text">
+       <string>Выгруженный файл</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QFrame" name="frame_Work">
+      <property name="styleSheet">
+       <string notr="true">QFrame {
+	background-color: #CCD6E9;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+}</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="3" column="0" colspan="2">
+        <widget class="QLabel" name="label_TypesOfRegressions">
+         <property name="font">
+          <font>
+           <family>Times New Roman</family>
+           <pointsize>10</pointsize>
+           <italic>true</italic>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+	background-color: #909CBE;
+	color: white;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+	padding: 5px 10px;
+}</string>
+         </property>
+         <property name="text">
+          <string>ТИПЫ РЕГРЕССИЙ</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayout_Regressions">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_Block1">
+           <item>
+            <widget class="QPushButton" name="pushButton_LinearReg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <italic>true</italic>
+              </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Линейная регрессия</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_ParabReg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <italic>true</italic>
+              </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Параболическая регрессия</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_Block2">
+           <item>
+            <widget class="QPushButton" name="pushButton_InverseLinearReg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <italic>true</italic>
+              </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Обратная линейная регрессия</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_LogReg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <italic>true</italic>
+              </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Логарифмическая регрессия</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_Block3">
+           <item>
+            <widget class="QPushButton" name="pushButton_ExpReg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <italic>true</italic>
+              </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Экспоненциальная регрессия</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_HyperReg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <italic>true</italic>
+              </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Гиперболическая регрессия</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_Block4">
+           <item>
+            <widget class="QPushButton" name="pushButton_PowerReg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <italic>true</italic>
+              </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Степенная регрессия</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_PolynomReg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <italic>true</italic>
+              </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Полиномиальная регрессия</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPushButton" name="pushButton_loadFile">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="font">
+          <font>
+           <italic>true</italic>
+          </font>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+         </property>
+         <property name="text">
+          <string>Загрузить данные</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_FilePath">
+         <property name="font">
+          <font>
+           <family>Times New Roman</family>
+           <pointsize>10</pointsize>
+           <italic>false</italic>
+          </font>
+         </property>
+         <property name="cursor">
+          <cursorShape>IBeamCursor</cursorShape>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+	background-color: #909CBE;
+	color: white;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+	padding: 5px 10px;
+}</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+         <property name="textInteractionFlags">
+          <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QTableView" name="tableView_TableData">
+      <property name="styleSheet">
+       <string notr="true">QTableView { 
+	background-color: #fdfdfd; 
+	alternate-background-color: #f0f4f8; 
+	gridline-color: #d1dbe5; font: 10pt &quot;Segoe UI&quot;; 
+	color: #102a43;
+	border: 2px solid darkgray;
+	border-radius: 5px;
+} 
+QHeaderView::section { 
+	background-color: #9334ff; 
+	color: white; 
+	padding: 4px; 
+	border: 1px solid #6925b6; 
+	font-weight: bold;
+} 
+QTableView::item:selected { 
+ 	background-color: #93c5fd;
+	color: #0c1a2c; 
+} 
+QTableView::item:hover 
+{ 
+	background-color: #dbeafe; 
+}
+
+</string>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+      </property>
+      <property name="alternatingRowColors">
+       <bool>true</bool>
+      </property>
+      <property name="showGrid">
+       <bool>true</bool>
+      </property>
+      <property name="gridStyle">
+       <enum>Qt::PenStyle::DashLine</enum>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
