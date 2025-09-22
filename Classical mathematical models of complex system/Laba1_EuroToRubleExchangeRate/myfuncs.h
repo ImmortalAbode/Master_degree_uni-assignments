@@ -39,11 +39,10 @@ void fillPredictTable(QTableView *tableView,
 
 // ---- Расчетные функции ---- //
 void getRegConnDesc(RegressionValues &values);
-void fillLabelsAuxiliaryQuantities(const int &mode,
-                                   const QVector<double> &numericDates,
-                                   const QVector<double> &cursValues,
-                                   QVector<double> &predicts,
-                                   RegressionValues &values);
+void calculateLinearRegression(const QVector<double> &numericDates,
+                               const QVector<double> &cursValues,
+                               QVector<double> &predicts,
+                               RegressionValues &values);
 
 
 #endif // MYFUNCS_H

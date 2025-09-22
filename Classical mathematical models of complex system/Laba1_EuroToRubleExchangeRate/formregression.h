@@ -3,8 +3,10 @@
 
 #include <QWidget>
 #include <QTableView>
+#include <QDate>
 
 #include "RegressionValues.h"
+#include "qcustomplot.h"
 
 namespace Ui {
 class FormRegression;
@@ -20,7 +22,6 @@ public:
 
 private:
     Ui::FormRegression *ui;
-
     RegressionValues values{};
 
     QVector<QString> dataColumn{};
@@ -32,6 +33,8 @@ private:
     QVector<double> xyProduct{};
 
     QVector<double> predicts{};
+    QDate select_date{};
+    QCPGraph* forecastGraph = nullptr;
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -42,7 +45,7 @@ signals:
 private slots:
     void on_pushButton_Back_clicked();
     void makePlot();
-    void on_pushButton_Predict_clicked();
+    void on_pushButton_Forecast_clicked();
 };
 
 #endif // FORMREGRESSION_H

@@ -308,106 +308,75 @@ void getRegConnDesc(RegressionValues &values)
 
 }
 // Вычисление коэффициентов и вспомогательных величин.
-void fillLabelsAuxiliaryQuantities(const int& mode,
-                                   const QVector<double> &numericDates,
-                                   const QVector<double> &cursValues,
-                                   QVector<double> &predicts,
-                                   RegressionValues &values)
+void calculateLinearRegression(const QVector<double> &numericDates,
+                               const QVector<double> &cursValues,
+                               QVector<double> &predicts,
+                               RegressionValues &values)
 {
     values.coeffs.clear();
     predicts.clear();
 
-    // Частные расчеты.
-    switch(mode)
+
+    // Вычисление вспомогательных величин и коэффициентов.
+    double A{}, A0{}, A1{}, B{}, a0{}, a1{};
+    A = values.n * values.sumX2 - values.sumX * values.sumX;
+    A0 = values.sumY * values.sumX2 - values.sumX * values.sumXY;
+    A1 = values.n * values.sumXY - values.sumX * values.sumY; // = B1
+    B = values.n * values.sumY2 - values.sumY * values.sumY;
+
+    // Заполнение вектора коэффициентов.
+    a0 = A0/A;
+    values.coeffs.append(a0);
+
+    a1 = A1/A;
+    values.coeffs.append(a1);
+
+    // Заполнение данных о коэффициентах.
+    values.regCoefStr = QString("Вспомогательные величины:\n"
+                                "A = %1\n"
+                                "A0 = %2\n"
+                                "A1 = %3\n"
+                                "\n"
+                                "B = %4\n"
+                                "\n"
+                                "Коэффициенты:\n"
+                                "a0 = %5\n"
+                                "a1 = %6")
+                            .arg(QString::number(A, 'f', 6))
+                            .arg(QString::number(A0, 'f', 6))
+                            .arg(QString::number(A1, 'f', 6))
+                            .arg(QString::number(B, 'f', 6))
+                            .arg(QString::number(a0, 'f', 6))
+                            .arg(QString::number(a1, 'f', 6));
+    // Заполнение итоговой функции.
+    values.funcStr = QString("y = %1 + %2x").arg(QString::number(a0, 'f', 6)).arg(QString::number(a1, 'f', 6));
+    // Заполнение описания коэффициента Пирсона.
+    values.r = A1 / std::sqrt(A * B); // или B1 / std::sqrt(A * B)
+    getRegConnDesc(values);
+    // Подсчет других величин.
+    values.Sx2 = 1.0 / (values.n - 1.0) * (values.sumX2 - 1.0 / values.n * std::pow(values.sumX, 2));
+    values.Sy2 = 1.0 / (values.n - 1.0) * (values.sumY2 - 1.0 / values.n * std::pow(values.sumY, 2));
+    values.SxMean = std::sqrt(values.Sx2)/std::sqrt(values.n);
+    values.SyMean = std::sqrt(values.Sy2)/std::sqrt(values.n);
+    // Вычисление предсказаний модели.
+    for (int i = 0; i < values.n; ++i)
     {
-    case 0:
-    {
-        // Вычисление вспомогательных величин и коэффициентов.
-        double A{}, A0{}, A1{}, B{}, a0{}, a1{};
-        A = values.n * values.sumX2 - values.sumX * values.sumX;
-        A0 = values.sumY * values.sumX2 - values.sumX * values.sumXY;
-        A1 = values.n * values.sumXY - values.sumX * values.sumY; // = B1
-        B = values.n * values.sumY2 - values.sumY * values.sumY;
+        double x{ numericDates[i] };
+        double y{ cursValues[i] };
+        double y_pred{};
+        y_pred = values.coeffs[0] + values.coeffs[1] * x;
+        predicts.append(y_pred);
 
-        // Заполнение вектора коэффициентов.
-        a0 = A0/A;
-        values.coeffs.append(a0);
+        // Вычисление величин по предсказаниям.
+        values.Sost += std::pow(y - y_pred, 2);
+        values.Sregr += std::pow(y_pred - values.meanY, 2);
 
-        a1 = A1/A;
-        values.coeffs.append(a1);
-
-        // Заполнение данных о коэффициентах.
-        values.regCoefStr = QString("Вспомогательные величины:\n"
-                                    "A = %1\n"
-                                    "A0 = %2\n"
-                                    "A1 = %3\n"
-                                    "\n"
-                                    "B = %4\n"
-                                    "\n"
-                                    "Коэффициенты:\n"
-                                    "a0 = %5\n"
-                                    "a1 = %6")
-                                .arg(QString::number(A, 'f', 6))
-                                .arg(QString::number(A0, 'f', 6))
-                                .arg(QString::number(A1, 'f', 6))
-                                .arg(QString::number(B, 'f', 6))
-                                .arg(QString::number(a0, 'f', 6))
-                                .arg(QString::number(a1, 'f', 6));
-        // Заполнение итоговой функции.
-        values.funcStr = QString("y = %1 + %2x").arg(QString::number(a0, 'f', 6)).arg(QString::number(a1, 'f', 6));
-        // Заполнение описания коэффициента Пирсона.
-        values.r = A1 / std::sqrt(A * B); // или B1 / std::sqrt(A * B)
-        getRegConnDesc(values);
-        // Подсчет других величин.
-        values.Sx2 = 1.0 / (values.n - 1.0) * (values.sumX2 - 1.0 / values.n * std::pow(values.sumX, 2));
-        values.Sy2 = 1.0 / (values.n - 1.0) * (values.sumY2 - 1.0 / values.n * std::pow(values.sumY, 2));
-        values.SxMean = std::sqrt(values.Sx2)/std::sqrt(values.n);
-        values.SyMean = std::sqrt(values.Sy2)/std::sqrt(values.n);
-        // Вычисление предсказаний модели.
-        for (int i = 0; i < values.n; ++i)
-        {
-            double x{ numericDates[i] };
-            double y{ cursValues[i] };
-            double y_pred{};
-            y_pred = values.coeffs[0] + values.coeffs[1] * x;
-            predicts.append(y_pred);
-
-            // Вычисление величин по предсказаниям.
-            values.Sost += std::pow(y - y_pred, 2);
-            values.Sregr += std::pow(y_pred - values.meanY, 2);
-
-        }
-        values.Spoln = values.Sost + values.Sregr;
-        values.R2 = 1 - values.Sost/values.Spoln; // или Sregr/Spoln
-        values.MSE = values.Sost / values.n;
-        break;
     }
-    // case 1:
-    //     setWindowTitle("Обратная линейная регрессия");
-    //     break;
-    // case 2:
-    //     setWindowTitle("Экспоненциальная регрессия");
-    //     break;
-    // case 3:
-    //     setWindowTitle("Гиперболическая регрессия");
-    //     break;
-    // case 4:
-    //     setWindowTitle("Параболическая регрессия");
-    //     break;
-    // case 5:
-    //     setWindowTitle("Логарифмическая регрессия");
-    //     break;
-    // case 6:
-    //     setWindowTitle("Степенная регрессия");
-    //     break;
-    // case 7:
-    //     setWindowTitle("Полиномиальная регрессия");
-    //     break;
-    default:
-        break;
-    }
-
+    values.Spoln = values.Sost + values.Sregr;
+    values.R2 = 1 - values.Sost/values.Spoln; // или Sregr/Spoln
+    values.MSE = values.Sost / values.n;
 }
+
 // Заполнение таблицы значениями.
 void fillPredictTable(QTableView *tableView,
                       const QVector<QString> &dataColumn,

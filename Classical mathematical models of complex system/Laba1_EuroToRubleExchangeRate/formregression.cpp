@@ -2,9 +2,11 @@
 #include "ui_formregression.h"
 
 #include "myfuncs.h"
+#include "qcustomplot.h"
 
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
+#include <QMessageBox>
 
 FormRegression::FormRegression(const int &mode, const QTableView *tableView_TableData, QWidget *parent)
     : QWidget(parent)
@@ -13,9 +15,33 @@ FormRegression::FormRegression(const int &mode, const QTableView *tableView_Tabl
     ui->setupUi(this);
     this->showMaximized();
     connect(ui->pushButton_Back, &QPushButton::clicked, this, &FormRegression::on_pushButton_Back_clicked);
+
+    // ---- ПРЕДОБРАБОТКА ---- //
+    // Чтение исходных данных и преобразование к нужному виду.
+    readDataAndCurs(tableView_TableData, this->dataColumn, this->numericDates, this->cursValues);
+
+    // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
+    // Вычисление значений квадратов, сумм и средних значений.
+    calculateRegressionValues(this->numericDates, this->cursValues, this->xSquared, this->ySquared, this->xyProduct, this->values);
+
+    // Заполнение таблицы.
+    fillTotalTable(ui->tableView_Calculations, this->dataColumn, this->numericDates, this->cursValues,
+                   this->xSquared, this->ySquared, this->xyProduct);
+    // Отображение значений величин под таблицей.
+    ui->label_sumX->setText(ui->label_sumX->text() + QString::number(this->values.sumX, 'f', 6));
+    ui->label_sumY->setText(ui->label_sumY->text() + QString::number(this->values.sumY, 'f', 6));
+    ui->label_sumX2->setText(ui->label_sumX2->text() + QString::number(this->values.sumX2, 'f', 6));
+    ui->label_sumY2->setText(ui->label_sumY2->text() + QString::number(this->values.sumY2, 'f', 6));
+    ui->label_sumXY->setText(ui->label_sumXY->text() + QString::number(this->values.sumXY, 'f', 6));
+    ui->label_meanX->setText(ui->label_meanX->text() + QString::number(this->values.meanX, 'f', 6));
+    ui->label_meanY->setText(ui->label_meanY->text() + QString::number(this->values.meanY, 'f', 6));
+
+    // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
+    // Вычисление значений коэффициентов, констант и вспомогательных величин в зависимости от типа регрессии + построение ураввнения регрессии.
     switch(mode){
     case 0:
         setWindowTitle("Линейная регрессия");
+        calculateLinearRegression(this->numericDates, this->cursValues, this->predicts, this->values);
         break;
     case 1:
         setWindowTitle("Обратная линейная регрессия");
@@ -40,30 +66,10 @@ FormRegression::FormRegression(const int &mode, const QTableView *tableView_Tabl
         break;
     default:
         setWindowTitle("Нерассматриваемый тип регрессии");
+        QMessageBox::warning(nullptr, "Предупреждение", "Неизвестный тип регрессии, не удалось вычислить коэффициенты!");
         break;
     }
-    // ---- ПРЕДОБРАБОТКА ---- //
-    // Чтение исходных данных и преобразование к нужному виду.
-    readDataAndCurs(tableView_TableData, this->dataColumn, this->numericDates, this->cursValues);
 
-    // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
-    // Вычисление значений квадратов, сумм и средних значений.
-    calculateRegressionValues(this->numericDates, this->cursValues, this->xSquared, this->ySquared, this->xyProduct, this->values);
-    // Заполнение таблицы.
-    fillTotalTable(ui->tableView_Calculations, this->dataColumn, this->numericDates, this->cursValues,
-                    this->xSquared, this->ySquared, this->xyProduct);
-    // Отображение значений величин под таблицей.
-    ui->label_sumX->setText(ui->label_sumX->text() + QString::number(this->values.sumX, 'f', 6));
-    ui->label_sumY->setText(ui->label_sumY->text() + QString::number(this->values.sumY, 'f', 6));
-    ui->label_sumX2->setText(ui->label_sumX2->text() + QString::number(this->values.sumX2, 'f', 6));
-    ui->label_sumY2->setText(ui->label_sumY2->text() + QString::number(this->values.sumY2, 'f', 6));
-    ui->label_sumXY->setText(ui->label_sumXY->text() + QString::number(this->values.sumXY, 'f', 6));
-    ui->label_meanX->setText(ui->label_meanX->text() + QString::number(this->values.meanX, 'f', 6));
-    ui->label_meanY->setText(ui->label_meanY->text() + QString::number(this->values.meanY, 'f', 6));
-
-    // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
-    // Вычисление значений коэффициентов и вспомогательных величин в зависимости от типа регрессии (общая функция).
-    fillLabelsAuxiliaryQuantities(mode, this->numericDates, this->cursValues, this->predicts, this->values);
     // Заполнение таблицы предсказаний модели.
     fillPredictTable(ui->tableView_CalcPredicts, this->dataColumn, this->numericDates, this->cursValues, this->predicts, this->values);
     // Отображение найденных значений под таблицей.
@@ -157,6 +163,35 @@ void FormRegression::makePlot()
     yTicker->setScaleStrategy(QCPAxisTickerFixed::ssNone);
     ui->QCustomPlot_graphic->yAxis->setTicker(yTicker);
     ui->QCustomPlot_graphic->yAxis->setSubTicks(true);
+    connect(ui->QCustomPlot_graphic->yAxis,
+            static_cast<void (QCPAxis::*)(const QCPRange &)>(&QCPAxis::rangeChanged),
+            this,
+            [=](const QCPRange &newRange)
+            {
+                // Текущий масштаб.
+                double range = newRange.size();
+
+                // * Масштабирование шага * //
+                // Примерный шаг делений оси.
+                double roughStep = range / 20.0;
+                // Представим: roughStep = fraction * 10^exponent ([что-то между 1 и 10] * 10^n).
+                double exponent = std::floor(std::log10(roughStep));
+                double fraction = roughStep / std::pow(10, exponent);
+                double niceFraction{};
+
+                // Красивый Fraction.
+                if (fraction <= 1.0) niceFraction = 1.0;
+                else if (fraction <= 2.0) niceFraction = 2.0;
+                else if (fraction <= 5.0) niceFraction = 5.0;
+                else niceFraction = 10.0;
+
+                // Полученный шаг.
+                double step = niceFraction * std::pow(10, exponent);
+
+                // Установка шага.
+                yTicker->setTickStep(step);
+                ui->QCustomPlot_graphic->yAxis->setTicker(yTicker);
+            });
 
     // Ось X.
     QSharedPointer<QCPAxisTickerDateTime> dateTicker(new QCPAxisTickerDateTime);
@@ -247,9 +282,54 @@ void FormRegression::closeEvent(QCloseEvent *event)
     emit backToMain();
 }
 
-
-void FormRegression::on_pushButton_Predict_clicked()
+void FormRegression::on_pushButton_Forecast_clicked()
 {
+    // Введенная пользователем дата.
+    QDate selectedDate = ui->dateEdit->date();
 
+    // Максимальная дата в исходных данных.
+    QDate lastDate = QDate();
+    for (int i = 0; i < dataColumn.size(); ++i)
+    {
+        QDate d = QDate::fromString(dataColumn[i], "dd.MM.yyyy");
+        if (d > lastDate) lastDate = d;
+    }
+    // Нужна дата позже максимальной даты в исходных данных.
+    if (selectedDate <= lastDate)
+    {
+        QMessageBox::critical(this, "Ошибка", QString("Дата должна быть позже %1, так как интерес представляет будущее.").arg(lastDate.toString("dd.MM.yyyy")));
+        return;
+    }
+    else
+    {
+        this->select_date = selectedDate;
+        if (!this->forecastGraph)
+        {
+            // Создание графика прогноза только 1 раз.
+            ui->QCustomPlot_graphic->addGraph();
+            forecastGraph = ui->QCustomPlot_graphic->graph(2);
+            forecastGraph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDiamond, 10));
+            forecastGraph->setLineStyle(QCPGraph::lsNone);
+            forecastGraph->setName("Прогноз");
+        }
+        // Преобразуем в QDateTime и в секунды указанную дату.
+        QDateTime selectedDT(this->select_date, QTime(0,0));
+        // Координата X для графика.
+        double xForecast_graphic = selectedDT.toSecsSinceEpoch();
+
+        // Координата X для расчетов.
+        QDate epoch(1970, 1, 1);
+        double xForecast_calc = epoch.daysTo(this->select_date)/10000.0;
+
+        // Координата Y.
+        double yForecast{};
+        yForecast = this->values.coeffs[0] + this->values.coeffs[1] * xForecast_calc;
+
+        // Обновляем холст.
+        forecastGraph->setData({xForecast_graphic}, {yForecast});
+        ui->QCustomPlot_graphic->replot();
+        // Обновляем прогноз.
+        ui->label_Forecast->setText(ui->label_Forecast->text() + "(" + QString::number(xForecast_calc, 'g', 6) + ";" + QString::number(yForecast, 'g', 6) + ")");
+    }
 }
 
