@@ -310,6 +310,11 @@ void FormRegression::on_pushButton_Forecast_clicked()
             forecastGraph = ui->QCustomPlot_graphic->graph(2);
             forecastGraph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDiamond, 10));
             forecastGraph->setLineStyle(QCPGraph::lsNone);
+
+            QCPSelectionDecorator *decor2 = new QCPSelectionDecorator;
+            decor2->setPen(QPen(Qt::green, 2));
+            forecastGraph->setSelectionDecorator(decor2);
+
             forecastGraph->setName("Прогноз");
         }
         // Преобразуем в QDateTime и в секунды указанную дату.
@@ -329,7 +334,7 @@ void FormRegression::on_pushButton_Forecast_clicked()
         forecastGraph->setData({xForecast_graphic}, {yForecast});
         ui->QCustomPlot_graphic->replot();
         // Обновляем прогноз.
-        ui->label_Forecast->setText(ui->label_Forecast->text() + "(" + QString::number(xForecast_calc, 'g', 6) + ";" + QString::number(yForecast, 'g', 6) + ")");
+        ui->label_Forecast->setText("Прогноз курса Евро: " + QString::number(yForecast, 'g', 6));
     }
 }
 
