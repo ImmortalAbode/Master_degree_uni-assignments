@@ -21,6 +21,8 @@ public:
 private:
     Ui::FormRegression *ui;
 
+    RegressionValues values{};
+
     QVector<QString> dataColumn{};
     QVector<double> numericDates{};
     QVector<double> cursValues{};
@@ -28,7 +30,6 @@ private:
     QVector<double> xSquared{};
     QVector<double> ySquared{};
     QVector<double> xyProduct{};
-    RegressionValues values{};
 
     QVector<double> predicts{};
 
@@ -40,6 +41,8 @@ signals:
 
 private slots:
     void on_pushButton_Back_clicked();
+    void makePlot();
+    void on_pushButton_Predict_clicked();
 };
 
 #endif // FORMREGRESSION_H

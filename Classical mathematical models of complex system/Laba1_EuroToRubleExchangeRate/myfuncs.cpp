@@ -338,13 +338,14 @@ void fillLabelsAuxiliaryQuantities(const int& mode,
 
         // Заполнение данных о коэффициентах.
         values.regCoefStr = QString("Вспомогательные величины:\n"
-                                    "A = %1\t\t"
+                                    "A = %1\n"
                                     "A0 = %2\n"
-                                    "A1 = %3\t\t"
+                                    "A1 = %3\n"
+                                    "\n"
                                     "B = %4\n"
                                     "\n"
                                     "Коэффициенты:\n"
-                                    "a0 = %5\t"
+                                    "a0 = %5\n"
                                     "a1 = %6")
                                 .arg(QString::number(A, 'f', 6))
                                 .arg(QString::number(A0, 'f', 6))

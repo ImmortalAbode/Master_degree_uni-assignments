@@ -619,6 +619,12 @@ QTableView::item:hover
       <property name="gridStyle">
        <enum>Qt::PenStyle::DashLine</enum>
       </property>
+      <attribute name="horizontalHeaderCascadingSectionResizes">
+       <bool>false</bool>
+      </attribute>
+      <attribute name="horizontalHeaderStretchLastSection">
+       <bool>false</bool>
+      </attribute>
      </widget>
     </item>
    </layout>
