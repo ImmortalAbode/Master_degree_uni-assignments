@@ -138,6 +138,14 @@ void FormRegression::makePlot()
         yForecast = this->values.coeffs[0] + this->values.coeffs[1] * xForecast_calc;
     }
 
+    // Определение максимальной и минимальной даты.
+    double minX = *std::min_element(x.constBegin(), x.constEnd());
+    double maxX = *std::max_element(x.constBegin(), x.constEnd());
+    if (this->forecast_enabled)
+        maxX = std::max(maxX, xForecast_graphic);
+    QDateTime minDate = QDateTime::fromSecsSinceEpoch(minX);
+    QDateTime maxDate = QDateTime::fromSecsSinceEpoch(maxX);
+
     // ----------------- График экспериментальных данных ----------------- //
     ui->QCustomPlot_graphic->addGraph();
     ui->QCustomPlot_graphic->graph(0)->setData(x, y);
@@ -224,24 +232,11 @@ void FormRegression::makePlot()
     ui->QCustomPlot_graphic->xAxis->setTickLabelRotation(30);
 
     /* Диапазоны осей */
-    // Ось X.
-    double minX = *std::min_element(x.constBegin(), x.constEnd());
-    double maxX = *std::max_element(x.constBegin(), x.constEnd());
-    if (this->forecast_enabled)
-        maxX = std::max(maxX, xForecast_graphic);
-    QDateTime minDate = QDateTime::fromSecsSinceEpoch(minX);
-    QDateTime maxDate = QDateTime::fromSecsSinceEpoch(maxX);
-    ui->QCustomPlot_graphic->xAxis->setRange(minDate.addDays(-1).toSecsSinceEpoch(), maxDate.addDays(1).toSecsSinceEpoch());
-
-    // Ось Y.
-    double minY = *std::min_element(y.constBegin(), y.constEnd());
-    double maxY = *std::max_element(y.constBegin(), y.constEnd());
-    if (this->forecast_enabled)
-    {
-        minY = std::min(minY, yForecast);
-        maxY = std::max(maxY, yForecast);
-    }
-    ui->QCustomPlot_graphic->yAxis->setRange(minY - 0.5, maxY + 0.5);
+    ui->QCustomPlot_graphic->rescaleAxes(); // Автоматическое изменение диапазона осей
+    auto xRange = ui->QCustomPlot_graphic->xAxis->range();
+    auto yRange = ui->QCustomPlot_graphic->yAxis->range();
+    ui->QCustomPlot_graphic->xAxis->setRange(xRange.lower - 86400, xRange.upper + 86400); // 1 день отступ
+    ui->QCustomPlot_graphic->yAxis->setRange(yRange.lower - 0.5, yRange.upper + 0.5);     // 0.5 отступ
 
     // ----------------- Масштабирование и drag ----------------- //
     ui->QCustomPlot_graphic->setInteraction(QCP::iRangeDrag, true);         // перетаскивание мышью
@@ -313,7 +308,7 @@ void FormRegression::makePlot()
     ui->QCustomPlot_graphic->legend->setBorderPen(QPen(QColor(150, 150, 150, 180)));
     ui->QCustomPlot_graphic->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignLeft | Qt::AlignTop);
 
-    // Отрисовка
+    // Отрисовка.
     ui->QCustomPlot_graphic->replot();
 }
 
@@ -351,6 +346,7 @@ void FormRegression::on_pushButton_Forecast_clicked()
     {
         QMessageBox::critical(this, "Ошибка", QString("Дата должна быть позже %1, так как интерес представляет будущее.").arg(lastDate.toString("dd.MM.yyyy")));
         this->forecast_enabled = false;
+        FormRegression::makePlot();
         return;
     }
 
