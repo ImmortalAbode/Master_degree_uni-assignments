@@ -1280,7 +1280,7 @@ QPushButton:pressed {
 }</string>
           </property>
           <property name="text">
-           <string>Прогноз курса Евро: ???</string>
+           <string>Прогноз курса Евро: не определен.</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignmentFlag::AlignCenter</set>

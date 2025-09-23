@@ -34,7 +34,8 @@ private:
 
     QVector<double> predicts{};
     QDate select_date{};
-    QCPGraph* forecastGraph = nullptr;
+
+    bool forecast_enabled{false};
 
 protected:
     void closeEvent(QCloseEvent *event) override;

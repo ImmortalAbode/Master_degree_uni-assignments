@@ -101,13 +101,16 @@ void FormRegression::makePlot()
     if (this->dataColumn.isEmpty() || this->cursValues.isEmpty() || this->predicts.isEmpty())
         return;
 
-    // Очистка холста.
-    ui->QCustomPlot_graphic->clearGraphs();
+    // Очистка графиков холста.
+    ui->QCustomPlot_graphic->clearGraphs();;
 
     // Подготовка векторов.
     int n = this->dataColumn.size();
     QVector<double> x(n), y(n), y_T(n);
     QVector<QDateTime> dateTimes(n);
+
+    // Точка прогноза.
+    double xForecast_graphic{}, yForecast{};
 
     for (int i = 0; i < n; ++i)
     {
@@ -117,6 +120,22 @@ void FormRegression::makePlot()
         x[i] = dateTimes[i].toSecsSinceEpoch(); // координата X
         y[i] = cursValues[i];                   // исходные данные
         y_T[i] = predicts[i];                   // предсказание модели
+    }
+
+    // Если имеется точка прогноза.
+    if (this->forecast_enabled)
+    {
+        // Преобразуем в QDateTime и в секунды указанную дату.
+        QDateTime selectedDT(this->select_date, QTime(0,0));
+        // Координата X для графика.
+        xForecast_graphic = selectedDT.toSecsSinceEpoch();
+
+        // Координата X для расчетов.
+        QDate epoch(1970, 1, 1);
+        double xForecast_calc = epoch.daysTo(this->select_date)/10000.0;
+
+        // Координата Y.
+        yForecast = this->values.coeffs[0] + this->values.coeffs[1] * xForecast_calc;
     }
 
     // ----------------- График экспериментальных данных ----------------- //
@@ -130,6 +149,8 @@ void FormRegression::makePlot()
     // ----------------- График модели ----------------- //
     ui->QCustomPlot_graphic->addGraph();
     ui->QCustomPlot_graphic->graph(1)->setData(x, y_T);
+    if (this->forecast_enabled)
+        ui->QCustomPlot_graphic->graph(1)->addData(xForecast_graphic, yForecast);
     ui->QCustomPlot_graphic->graph(1)->setPen(QPen(Qt::red, 2));
 
     // ----------------- Подпись коэф. детерминации у уравнению модели  ----------------- //
@@ -197,30 +218,29 @@ void FormRegression::makePlot()
     QSharedPointer<QCPAxisTickerDateTime> dateTicker(new QCPAxisTickerDateTime);
     dateTicker->setDateTimeFormat("dd.MM.yyyy");
     ui->QCustomPlot_graphic->xAxis->setSubTicks(true);
-
-    QDateTime minDate = QDateTime::fromSecsSinceEpoch(*std::min_element(x.constBegin(), x.constEnd()));
-    QDateTime maxDate = QDateTime::fromSecsSinceEpoch(*std::max_element(x.constBegin(), x.constEnd()));
-    int days = minDate.daysTo(maxDate);
-    int roundedDays = ((days + 5) / 10) * 10; // общее число показываемых дней
-    int mainTicks = roundedDays / 10 + 1; // число основных делений
-
-    dateTicker->setTickCount(mainTicks);
+    dateTicker->setTickCount(10);
     dateTicker->setTickStepStrategy(QCPAxisTicker::tssMeetTickCount);
-
     ui->QCustomPlot_graphic->xAxis->setTicker(dateTicker);
-    ui->QCustomPlot_graphic->xAxis->setTickLabelRotation(45);
-
+    ui->QCustomPlot_graphic->xAxis->setTickLabelRotation(30);
 
     /* Диапазоны осей */
     // Ось X.
-    ui->QCustomPlot_graphic->xAxis->setRange(
-        minDate.toSecsSinceEpoch(),
-        minDate.addDays(roundedDays).toSecsSinceEpoch()
-        );
+    double minX = *std::min_element(x.constBegin(), x.constEnd());
+    double maxX = *std::max_element(x.constBegin(), x.constEnd());
+    if (this->forecast_enabled)
+        maxX = std::max(maxX, xForecast_graphic);
+    QDateTime minDate = QDateTime::fromSecsSinceEpoch(minX);
+    QDateTime maxDate = QDateTime::fromSecsSinceEpoch(maxX);
+    ui->QCustomPlot_graphic->xAxis->setRange(minDate.addDays(-1).toSecsSinceEpoch(), maxDate.addDays(1).toSecsSinceEpoch());
 
     // Ось Y.
     double minY = *std::min_element(y.constBegin(), y.constEnd());
     double maxY = *std::max_element(y.constBegin(), y.constEnd());
+    if (this->forecast_enabled)
+    {
+        minY = std::min(minY, yForecast);
+        maxY = std::max(maxY, yForecast);
+    }
     ui->QCustomPlot_graphic->yAxis->setRange(minY - 0.5, maxY + 0.5);
 
     // ----------------- Масштабирование и drag ----------------- //
@@ -239,6 +259,24 @@ void FormRegression::makePlot()
     decor1->setPen(QPen(Qt::green, 2));
     ui->QCustomPlot_graphic->graph(1)->setSelectionDecorator(decor1);
 
+    // ----------------- График прогноза ------------------- //
+    if (this->forecast_enabled)
+    {
+        // Создание графика прогноза.
+        ui->QCustomPlot_graphic->addGraph();
+        ui->QCustomPlot_graphic->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDiamond, 10));
+        ui->QCustomPlot_graphic->graph(2)->setLineStyle(QCPGraph::lsNone);
+
+        QCPSelectionDecorator *decor2 = new QCPSelectionDecorator;
+        decor2->setPen(QPen(Qt::green, 2));
+        ui->QCustomPlot_graphic->graph(2)->setSelectionDecorator(decor2);
+
+        ui->QCustomPlot_graphic->graph(2)->setName("Прогноз");
+
+        ui->QCustomPlot_graphic->graph(2)->setData({xForecast_graphic}, {yForecast});
+        ui->label_Forecast->setText("Прогноз курса Евро: " + QString::number(yForecast, 'g', 6) + " руб.");
+    }
+
     // ---------------- Padding от краев графика -----------------//
     ui->QCustomPlot_graphic->axisRect()->setMargins(QMargins(20, 20, 20, 20));
 
@@ -246,10 +284,24 @@ void FormRegression::makePlot()
     QString title = QString("Курс Евро с %1 по %2")
                         .arg(minDate.date().toString("dd.MM.yyyy"))
                         .arg(maxDate.date().toString("dd.MM.yyyy"));
-    ui->QCustomPlot_graphic->plotLayout()->insertRow(0);
-    QCPTextElement *titleElement = new QCPTextElement(ui->QCustomPlot_graphic, title, QFont("Arial", 12, QFont::Bold));
-    titleElement->setMargins(QMargins(0, 10, 0, 0));
-    ui->QCustomPlot_graphic->plotLayout()->addElement(0, 0, titleElement);
+    // Паддинг от краев графика.
+    ui->QCustomPlot_graphic->axisRect()->setMargins(QMargins(20, 20, 20, 20));
+
+    // Проверка на существование заголовка в окне. Если нет - добавление, иначе - замена текста.
+    if (!ui->QCustomPlot_graphic->plotLayout()->elementCount() ||
+        !qobject_cast<QCPTextElement*>(ui->QCustomPlot_graphic->plotLayout()->elementAt(0)))
+    {
+        // Установка названия графика.
+        ui->QCustomPlot_graphic->plotLayout()->insertRow(0);
+        QCPTextElement *titleElement = new QCPTextElement(ui->QCustomPlot_graphic, title, QFont("Arial", 12, QFont::Bold));
+        titleElement->setMargins(QMargins(0, 10, 0, 0));
+        ui->QCustomPlot_graphic->plotLayout()->addElement(0, 0, titleElement);
+    }
+    else
+    {
+        auto header = qobject_cast<QCPTextElement*>(ui->QCustomPlot_graphic->plotLayout()->elementAt(0));
+        header->setText(title);
+    }
 
     // ----------------- Легенда ----------------- //
     QFont legendFont = ui->QCustomPlot_graphic->legend->font();
@@ -298,43 +350,12 @@ void FormRegression::on_pushButton_Forecast_clicked()
     if (selectedDate <= lastDate)
     {
         QMessageBox::critical(this, "Ошибка", QString("Дата должна быть позже %1, так как интерес представляет будущее.").arg(lastDate.toString("dd.MM.yyyy")));
+        this->forecast_enabled = false;
         return;
     }
-    else
-    {
-        this->select_date = selectedDate;
-        if (!this->forecastGraph)
-        {
-            // Создание графика прогноза только 1 раз.
-            ui->QCustomPlot_graphic->addGraph();
-            forecastGraph = ui->QCustomPlot_graphic->graph(2);
-            forecastGraph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDiamond, 10));
-            forecastGraph->setLineStyle(QCPGraph::lsNone);
 
-            QCPSelectionDecorator *decor2 = new QCPSelectionDecorator;
-            decor2->setPen(QPen(Qt::green, 2));
-            forecastGraph->setSelectionDecorator(decor2);
-
-            forecastGraph->setName("Прогноз");
-        }
-        // Преобразуем в QDateTime и в секунды указанную дату.
-        QDateTime selectedDT(this->select_date, QTime(0,0));
-        // Координата X для графика.
-        double xForecast_graphic = selectedDT.toSecsSinceEpoch();
-
-        // Координата X для расчетов.
-        QDate epoch(1970, 1, 1);
-        double xForecast_calc = epoch.daysTo(this->select_date)/10000.0;
-
-        // Координата Y.
-        double yForecast{};
-        yForecast = this->values.coeffs[0] + this->values.coeffs[1] * xForecast_calc;
-
-        // Обновляем холст.
-        forecastGraph->setData({xForecast_graphic}, {yForecast});
-        ui->QCustomPlot_graphic->replot();
-        // Обновляем прогноз.
-        ui->label_Forecast->setText("Прогноз курса Евро: " + QString::number(yForecast, 'g', 6));
-    }
+    this->select_date = selectedDate;
+    this->forecast_enabled = true;
+    FormRegression::makePlot();
 }
 
