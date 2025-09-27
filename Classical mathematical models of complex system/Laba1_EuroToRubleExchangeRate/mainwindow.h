@@ -19,9 +19,8 @@ public:
 
 private slots:
     void on_pushButton_loadFile_clicked();
-    void on_pushButton_LinearReg_clicked();
-
     void show_window();
+    void openRegressionForm();
 
 private:
     Ui::MainWindow *ui;

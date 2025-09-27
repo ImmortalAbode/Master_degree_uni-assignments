@@ -20,13 +20,15 @@
    <string>MainWindow</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">QMainWindow{
+	 background-color: rgb(213, 218, 241);
+}</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="styleSheet">
     <string notr="true"/>
    </property>
-   <layout class="QGridLayout" name="gridLayout_3">
+   <layout class="QGridLayout" name="gridLayout_4">
     <item row="0" column="0">
      <widget class="QFrame" name="frame_title">
       <property name="styleSheet">
@@ -105,29 +107,212 @@
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QLabel" name="label_uploadedFile">
-      <property name="font">
-       <font>
-        <family>Times New Roman</family>
-        <pointsize>10</pointsize>
-        <italic>true</italic>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QLabel {
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="2" rowspan="2">
+       <widget class="QLabel" name="label_info">
+        <property name="font">
+         <font>
+          <family>Times New Roman</family>
+          <pointsize>10</pointsize>
+          <italic>false</italic>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>ArrowCursor</cursorShape>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QLabel {
+	background-color: #909CBE;
+	color: #ffffff;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+	padding: 5px 10px;
+}</string>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Shadow::Plain</enum>
+        </property>
+        <property name="text">
+         <string>Данные для .xlsx файла (Excel) взяты из динамики официального курса заданной валюты (Евро) с сайта ЦБР за указанный период.</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::TextInteractionFlag::NoTextInteraction</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_info_link">
+        <property name="font">
+         <font>
+          <family>Times New Roman</family>
+          <pointsize>10</pointsize>
+          <italic>false</italic>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>ArrowCursor</cursorShape>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QLabel {
+	background-color: #909CBE;
+	color: #ffffff;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+	padding: 5px 10px;
+	max-width: 100px;
+}</string>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Shadow::Plain</enum>
+        </property>
+        <property name="text">
+         <string>Сайт ЦБР:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::TextInteractionFlag::NoTextInteraction</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="label_link">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>9</pointsize>
+          <italic>true</italic>
+          <underline>true</underline>
+          <fontweight>ExtraBold</fontweight>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QLabel {
+    background-color: rgb(255, 255, 255);
+	color: rgb(0, 0, 127);
+    font-family: &quot;Segoe UI&quot;;
+    font-size: 9pt;
+    font-weight: 800;
+    padding: 5px;
+	max-width: 300px;
+	border: 2px solid #B1B6DB;
+	border-radius: 12px;
+}
+</string>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Shadow::Plain</enum>
+        </property>
+        <property name="text">
+         <string>https://www.cbr.ru/currency_base/dynamics/</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="QLabel" name="label_uploadedFile">
+        <property name="font">
+         <font>
+          <family>Times New Roman</family>
+          <pointsize>10</pointsize>
+          <italic>true</italic>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QLabel {
 	background-color: #909CBE;
 	color: white;
 	border: 2px solid #B1B6DB;
 	border-radius: 12px;
 	padding: 5px 10px;
 }</string>
+        </property>
+        <property name="text">
+         <string>Выгруженный файл</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="0">
+     <widget class="QTableView" name="tableView_TableData">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
-      <property name="text">
-       <string>Выгруженный файл</string>
+      <property name="styleSheet">
+       <string notr="true">QTableView { 
+	background-color: #fdfdfd; 
+	alternate-background-color: #f0f4f8; 
+	gridline-color: #d1dbe5; font: 10pt &quot;Segoe UI&quot;; 
+	color: #102a43;
+	border: 2px solid darkgray;
+	border-radius: 5px;
+} 
+QHeaderView::section { 
+	background-color: #9334ff; 
+	color: white; 
+	padding: 4px; 
+	border: 1px solid #6925b6; 
+	font-weight: bold;
+	text-align: center;
+} 
+QTableView::item:selected { 
+ 	background-color: #93c5fd;
+	color: #0c1a2c; 
+} 
+QTableView::item:hover 
+{ 
+	background-color: #dbeafe; 
+}</string>
       </property>
-      <property name="alignment">
-       <set>Qt::AlignmentFlag::AlignCenter</set>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
       </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+      </property>
+      <property name="alternatingRowColors">
+       <bool>true</bool>
+      </property>
+      <property name="showGrid">
+       <bool>true</bool>
+      </property>
+      <property name="gridStyle">
+       <enum>Qt::PenStyle::DashLine</enum>
+      </property>
+      <attribute name="horizontalHeaderCascadingSectionResizes">
+       <bool>false</bool>
+      </attribute>
+      <attribute name="horizontalHeaderStretchLastSection">
+       <bool>false</bool>
+      </attribute>
      </widget>
     </item>
     <item row="3" column="0">
@@ -553,7 +738,7 @@ QPushButton:pressed {
           </font>
          </property>
          <property name="cursor">
-          <cursorShape>IBeamCursor</cursorShape>
+          <cursorShape>ArrowCursor</cursorShape>
          </property>
          <property name="styleSheet">
           <string notr="true">QLabel {
@@ -576,55 +761,6 @@ QPushButton:pressed {
         </widget>
        </item>
       </layout>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QTableView" name="tableView_TableData">
-      <property name="styleSheet">
-       <string notr="true">QTableView { 
-	background-color: #fdfdfd; 
-	alternate-background-color: #f0f4f8; 
-	gridline-color: #d1dbe5; font: 10pt &quot;Segoe UI&quot;; 
-	color: #102a43;
-	border: 2px solid darkgray;
-	border-radius: 5px;
-} 
-QHeaderView::section { 
-	background-color: #9334ff; 
-	color: white; 
-	padding: 4px; 
-	border: 1px solid #6925b6; 
-	font-weight: bold;
-} 
-QTableView::item:selected { 
- 	background-color: #93c5fd;
-	color: #0c1a2c; 
-} 
-QTableView::item:hover 
-{ 
-	background-color: #dbeafe; 
-}
-
-</string>
-      </property>
-      <property name="editTriggers">
-       <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
-      </property>
-      <property name="alternatingRowColors">
-       <bool>true</bool>
-      </property>
-      <property name="showGrid">
-       <bool>true</bool>
-      </property>
-      <property name="gridStyle">
-       <enum>Qt::PenStyle::DashLine</enum>
-      </property>
-      <attribute name="horizontalHeaderCascadingSectionResizes">
-       <bool>false</bool>
-      </attribute>
-      <attribute name="horizontalHeaderStretchLastSection">
-       <bool>false</bool>
-      </attribute>
      </widget>
     </item>
    </layout>
