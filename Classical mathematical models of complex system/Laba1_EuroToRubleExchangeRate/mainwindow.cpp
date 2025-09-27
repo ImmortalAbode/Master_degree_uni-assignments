@@ -19,10 +19,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButton_LogReg->setEnabled(false);
     ui->pushButton_PowerReg->setEnabled(false);
     ui->pushButton_PolynomReg->setEnabled(false);
-    // Подключение сигналов
+    // подключение сигналов
     connect(ui->pushButton_LinearReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
     connect(ui->pushButton_InverseLinearReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
-
+    connect(ui->pushButton_ExpReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
 
     connect(ui->pushButton_ParabReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
 
@@ -90,6 +90,8 @@ void MainWindow::openRegressionForm()
         idx = 0;
     else if (button->objectName() == "pushButton_InverseLinearReg")
         idx = 1;
+    else if (button->objectName() == "pushButton_ExpReg")
+        idx = 2;
     else if (button->objectName() == "pushButton_ParabReg")
         idx = 4;
     else if (button->objectName() == "pushButton_PolynomReg")

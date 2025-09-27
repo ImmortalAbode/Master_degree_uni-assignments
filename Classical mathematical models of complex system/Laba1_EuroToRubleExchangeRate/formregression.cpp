@@ -36,11 +36,11 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
         this->degree = 1;
         // Вычисление значений квадратов, сумм и средних значений.
-        calculatePolynomRegressionSums(this->numericDates, this->cursValues, degree, this->CalcColumns, this->ySquared, this->values);
+        calculatePolynomRegressionSums(this->numericDates, this->cursValues, this->degree, this->CalcColumns, this->ySquared, this->values);
         // Заполнение таблицы.
-        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, degree);
+        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, this->degree);
         // Заполнение текстового поля с суммами.
-        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, degree) };
+        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, this->degree) };
         ui->textEdit_Sums->setText(text_SUMs);
 
         // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
@@ -64,11 +64,11 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
         this->degree = 1;
         // Вычисление значений квадратов, сумм и средних значений (входные данные уже перевернуты).
-        calculatePolynomRegressionSums(this->cursValues, this->numericDates, degree, this->CalcColumns, this->ySquared, this->values);
+        calculatePolynomRegressionSums(this->cursValues, this->numericDates, this->degree, this->CalcColumns, this->ySquared, this->values);
         // Заполнение таблицы (входные данные уже перевернуты).
-        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->cursValues, this->numericDates, this->CalcColumns, this->ySquared, degree);
+        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->cursValues, this->numericDates, this->CalcColumns, this->ySquared, this->degree);
         // Заполнение текстового поля с суммами (входные данные уже перевернуты).
-        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, degree) };
+        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, this->degree) };
         ui->textEdit_Sums->setText(text_SUMs);
 
         // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
@@ -81,6 +81,15 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
     case 2:
     {
         setWindowTitle("Экспоненциальная регрессия");
+        // y = a0e^(a1*x)
+        // ln(y) = ln(a0) + a1*x
+        //
+        // Переобозначим: z = b0 + b1*x, где z = ln(y), b0 = ln(a0), b1 = a1.
+        //
+        // Система:
+        // {b0*n + b1*E(xi) = E(zi)
+        // {b0*E(xi) + b1*E(xi^2) = E(xi*zi)
+
         break;
     }
     case 3:
@@ -100,22 +109,22 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
         this->degree = 2;
         // Вычисление значений квадратов, сумм и средних значений.
-        calculatePolynomRegressionSums(this->numericDates, this->cursValues, degree, this->CalcColumns, this->ySquared, this->values);
+        calculatePolynomRegressionSums(this->numericDates, this->cursValues, this->degree, this->CalcColumns, this->ySquared, this->values);
         // Заполнение таблицы.
-        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, degree);
+        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, this->degree);
         // Заполнение текстового поля с суммами.
-        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, degree) };
+        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, this->degree) };
         ui->textEdit_Sums->setText(text_SUMs);
 
         // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
         // Вычисление коэффициентов.
-        if (!buildAndSolvePolynomRegression(this->values, degree))
+        if (!buildAndSolvePolynomRegression(this->values, this->degree))
         {
             QMessageBox::critical(this, "Ошибка", QString("Не удалось построить параболическую регрессию: система уравнений вырождена или точек меньше 3."));
             return;
         }
         // Подсчет величин регрессии.
-        calculatePolynomRegression(degree, this->numericDates, this->cursValues, this->predicts, this->values);
+        calculatePolynomRegression(this->degree, this->numericDates, this->cursValues, this->predicts, this->values);
         break;
     }
     case 5:
@@ -152,22 +161,22 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
         this->degree = degree;
         // Вычисление значений квадратов, сумм и средних значений.
-        calculatePolynomRegressionSums(this->numericDates, this->cursValues, degree, this->CalcColumns, this->ySquared, this->values);
+        calculatePolynomRegressionSums(this->numericDates, this->cursValues, this->degree, this->CalcColumns, this->ySquared, this->values);
         // Заполнение таблицы.
-        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, degree);
+        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, this->degree);
         // Заполнение текстового поля с суммами.
-        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, degree) };
+        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, this->degree) };
         ui->textEdit_Sums->setText(text_SUMs);
 
         // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
         // Вычисление коэффициентов.
-        if (!buildAndSolvePolynomRegression(this->values, degree))
+        if (!buildAndSolvePolynomRegression(this->values, this->degree))
         {
             QMessageBox::critical(this, "Ошибка", QString("Не удалось построить полиномиальную регрессию: система уравнений вырождена или точек меньше степени полинома."));
             return;
         }
         // Подсчет величин регрессии.
-        calculatePolynomRegression(degree, this->numericDates, this->cursValues, this->predicts, this->values);
+        calculatePolynomRegression(this->degree, this->numericDates, this->cursValues, this->predicts, this->values);
         break;
     }
     default:
@@ -190,7 +199,7 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
     ui->label_Sx2->setText(((mode != 1) ? "S<sub>x</sub><sup>2</sup> = " : "S<sub>y</sub><sup>2</sup> = ") + QString::number(this->values.Sx2, 'g', 6));
     ui->label_Sy2->setText(((mode != 1) ? "S<sub>y</sub><sup>2</sup> = " : "S<sub>x</sub><sup>2</sup> = ") + QString::number(this->values.Sy2, 'g', 6));
     ui->label_SxMean->setText(((mode != 1) ? "S<sub>x\u0304</sub> = " : "S<sub>y\u0304</sub> = ") + QString::number(this->values.SxMean, 'g', 6));
-    ui->label_SyMean->setText(((mode != 1) ? "S<sub>y\u0304</sub> = "  : "S<sub>y\u0304</sub> = ") + QString::number(this->values.SyMean, 'g', 6));
+    ui->label_SyMean->setText(((mode != 1) ? "S<sub>y\u0304</sub> = "  : "S<sub>x\u0304</sub> = ") + QString::number(this->values.SyMean, 'g', 6));
     ui->label_R2->setText("R<sup>2</sup> = " + QString::number(this->values.R2, 'g', 6));
     ui->label_Spoln->setText("S<sub>полн.</sub> = " + QString::number(this->values.Spoln, 'g', 6));
     ui->label_Sost->setText("S<sub>ост.</sub> = " + QString::number(this->values.Sost, 'g', 6));

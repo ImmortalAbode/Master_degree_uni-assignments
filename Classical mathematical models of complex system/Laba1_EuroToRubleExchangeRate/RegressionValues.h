@@ -12,7 +12,7 @@ struct RegressionValues
     QVector <double> SUMs{};
     double sumX = 0.0;
     double sumY = 0.0;
-    double sumY2 = 0.0;             // для обратной линейной регрессии тут хранится E(x^2)
+    double sumY2 = 0.0; // для обратной линейной регрессии тут хранится E(x^2)
     double meanX = 0.0;
     double meanY = 0.0;
 

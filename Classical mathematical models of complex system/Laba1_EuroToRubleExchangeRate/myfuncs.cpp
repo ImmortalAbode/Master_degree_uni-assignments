@@ -198,7 +198,8 @@ void fillTotalTable(QTableView *tableView,
                     const int &degree)
 {
     int rowCount = numericDates.size();
-    int colCount = 3 + CalcColumns.size() + 1;; // data, xi, yi, yi^2, (CalcColumns.size) столбцов с вычисленными значениями
+    int colCount = 3 + CalcColumns.size();; // data, xi, yi, (CalcColumns.size) столбцов с вычисленными значениями
+    if (degree == 1) colCount += 1; // (yi)^2
 
     QStandardItemModel *model = new QStandardItemModel(rowCount, colCount, tableView);
 
@@ -232,7 +233,7 @@ void fillTotalTable(QTableView *tableView,
         model->setHeaderData(c++, Qt::Horizontal, header);
 
         // Вывод y^2 отдельно.
-        if (k == 0)
+        if (k == 0 && degree == 1)
         {
             header = QString((mode != 1) ? "y\u1D62" : "x\u1D62") + toSuperscript(2);
             model->setHeaderData(c++, Qt::Horizontal, header);
@@ -251,7 +252,7 @@ void fillTotalTable(QTableView *tableView,
         for (int col = 0; col < CalcColumns.size(); ++col)
         {
             model->setItem(r, c++, new QStandardItem(QString::number(CalcColumns[col][r], 'f', 6)));
-            if (c == 4)
+            if (c == 4 && degree == 1)
                 model->setItem(r, c++, new QStandardItem(QString::number(ySquared[r], 'f', 6)));
         }
     }
@@ -278,7 +279,7 @@ QString fillSUMsTextEdit(const int &mode, const RegressionValues &values, const 
                         .arg((k == 1) ? "" : toSuperscript(k))
                         .arg(QString::number(values.SUMs[col], 'f', 6));
         // вывод SUM(y^2) отдельно
-        if (k == 2)
+        if (k == 2 && degree == 1)
         {
             infoSUMs += QString((mode != 1) ? "\u2211y%1 = %2\n" : "\u2211x%1 = %2\n")
             .arg(toSuperscript(2))
@@ -339,7 +340,7 @@ void calculatePolynomRegressionSums(const QVector<double> &numericDates,
 
         values.sumX += x;
         values.sumY += y;
-        values.sumY2 += y2;
+        if (degree == 1) values.sumY2 += y2;
 
         // Учет подсчитываемого стобца.
         int CalcCol = 0;
