@@ -67,9 +67,11 @@ void getRegConnDesc(RegressionValues &values);
 // Вспомогательные величины и коэффициенты для линейных видов регрессии.
 void getCoefsForLinearOrInverse(const bool &inverse, RegressionValues &values);
 
-// -- Линейная и обратная линейная регрессия --
+// -- Линейная и обратная линейная регрессия, а также сводящиеся к ним --
+// Сотавление вида функции и описания коэффициентов.
+void getFuncCoefDescr(const int& mode, RegressionValues &values);
 // Подсчет всего остального.
-void calculateLinearOrInverseRegression(const bool& inverse,
+void calculateLinearOrInverseRegression(const int& mode,
                                         const QVector<double> &numericDates,
                                         const QVector<double> &cursValues,
                                         QVector<double> &predicts,

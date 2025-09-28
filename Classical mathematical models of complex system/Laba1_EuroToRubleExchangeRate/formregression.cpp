@@ -47,7 +47,9 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         // Вычисление вспомогательных величин (метод Крамера и для коэффициента Пирсона) и коэффициентов.
         getCoefsForLinearOrInverse(false, this->values);
         // Подсчет величин регрессии.
-        calculateLinearOrInverseRegression(false, this->numericDates, this->cursValues, this->predicts, this->values);
+        calculateLinearOrInverseRegression(this->mode, this->numericDates, this->cursValues, this->predicts, this->values);
+        // Заполнение таблицы предсказаний модели.
+        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->predicts, this->values);
         break;
     }
     case 1:
@@ -75,7 +77,9 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         // Вычисление вспомогательных величин (метод Крамера и для коэффициента Пирсона) и коэффициентов.
         getCoefsForLinearOrInverse(true, this->values);
         // Подсчет величин регрессии.
-        calculateLinearOrInverseRegression(true, this->cursValues, this->numericDates, this->predicts, this->values);
+        calculateLinearOrInverseRegression(this->mode, this->cursValues, this->numericDates, this->predicts, this->values);
+        // Заполнение таблицы предсказаний модели.
+        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->predicts, this->values);
         break;
     }
     case 2:
@@ -90,11 +94,65 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         // {b0*n + b1*E(xi) = E(zi)
         // {b0*E(xi) + b1*E(xi^2) = E(xi*zi)
 
+        // ---- ПРЕОБРАЗОВАНИЯ К ЛИНЕЙНОЙ РЕГРЕССИИ ---- //
+        QVector<double> lnCursValues(cursValues.size());
+        for (int i = 0; i < cursValues.size(); ++i)
+            lnCursValues[i] = std::log(cursValues[i]);
+
+        // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
+        this->degree = 1;
+        // Вычисление значений квадратов, сумм и средних значений.
+        calculatePolynomRegressionSums(this->numericDates, lnCursValues, this->degree, this->CalcColumns, this->ySquared, this->values);
+        // Заполнение таблицы.
+        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, this->degree);
+        // Заполнение текстового поля с суммами.
+        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, this->degree) };
+        ui->textEdit_Sums->setText(text_SUMs);
+
+        // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
+        // Вычисление вспомогательных величин (метод Крамера и для коэффициента Пирсона) и коэффициентов.
+        getCoefsForLinearOrInverse(false, this->values);
+        // Подсчет величин регрессии.
+        calculateLinearOrInverseRegression(this->mode, this->numericDates, lnCursValues, this->predicts, this->values);
+        // Заполнение таблицы предсказаний модели.
+        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, this->numericDates, lnCursValues, this->predicts, this->values);
         break;
     }
     case 3:
+    {
         setWindowTitle("Гиперболическая регрессия");
+        // y = a0 + a1/x
+        //
+        // Переобозначим: y = a0 + a1*x, где z = 1/x
+        //
+        // Система:
+        // {a0*n + b1*E(zi) = E(yi)
+        // {a0*E(zi) + a1*E(zi^2) = E(zi*yi)
+
+        // ---- ПРЕОБРАЗОВАНИЯ К ЛИНЕЙНОЙ РЕГРЕССИИ ---- //
+        QVector<double> invNumericDates(numericDates.size());
+        for (int i = 0; i < numericDates.size(); ++i)
+            invNumericDates[i] = 1.0 / numericDates[i];
+
+        // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
+        this->degree = 1;
+        // Вычисление значений квадратов, сумм и средних значений.
+        calculatePolynomRegressionSums(invNumericDates, this->cursValues, this->degree, this->CalcColumns, this->ySquared, this->values);
+        // Заполнение таблицы.
+        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, this->degree);
+        // Заполнение текстового поля с суммами.
+        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, this->degree) };
+        ui->textEdit_Sums->setText(text_SUMs);
+
+        // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
+        // Вычисление вспомогательных величин (метод Крамера и для коэффициента Пирсона) и коэффициентов.
+        getCoefsForLinearOrInverse(false, this->values);
+        // Подсчет величин регрессии.
+        calculateLinearOrInverseRegression(this->mode, invNumericDates, this->cursValues, this->predicts, this->values);
+        // Заполнение таблицы предсказаний модели.
+        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, invNumericDates, this->cursValues, this->predicts, this->values);
         break;
+    }
     case 4:
     {
         setWindowTitle("Параболическая регрессия");
@@ -125,14 +183,84 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         }
         // Подсчет величин регрессии.
         calculatePolynomRegression(this->degree, this->numericDates, this->cursValues, this->predicts, this->values);
+        // Заполнение таблицы предсказаний модели.
+        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->predicts, this->values);
         break;
     }
     case 5:
+    {
         setWindowTitle("Логарифмическая регрессия");
+        // y = a0 + a1*ln(x)
+        //
+        // Переобозначим: y = a0 + a1*z, где z = ln(x).
+        //
+        // Система:
+        // {a0*n + a1*E(zi) = E(yi)
+        // {a0*E(zi) + a1*E(zi^2) = E(zi*yi)
+
+        // ---- ПРЕОБРАЗОВАНИЯ К ЛИНЕЙНОЙ РЕГРЕССИИ ---- //
+        QVector<double> lnNumericDates(numericDates.size());
+        for (int i = 0; i < cursValues.size(); ++i)
+            lnNumericDates[i] = std::log(numericDates[i]);
+
+        // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
+        this->degree = 1;
+        // Вычисление значений квадратов, сумм и средних значений.
+        calculatePolynomRegressionSums(lnNumericDates, this->cursValues, this->degree, this->CalcColumns, this->ySquared, this->values);
+        // Заполнение таблицы.
+        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, this->degree);
+        // Заполнение текстового поля с суммами.
+        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, this->degree) };
+        ui->textEdit_Sums->setText(text_SUMs);
+
+        // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
+        // Вычисление вспомогательных величин (метод Крамера и для коэффициента Пирсона) и коэффициентов.
+        getCoefsForLinearOrInverse(false, this->values);
+        // Подсчет величин регрессии.
+        calculateLinearOrInverseRegression(this->mode, lnNumericDates, this->cursValues, this->predicts, this->values);
+        // Заполнение таблицы предсказаний модели.
+        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, lnNumericDates, this->cursValues, this->predicts, this->values);
         break;
+    }
     case 6:
+    {
         setWindowTitle("Степенная регрессия");
+        // y = a0x^a1
+        // ln(y) = ln(a0) + a1*lnx
+        //
+        // Переобозначим: g = b0 + b1*z, где g = ln(y), b0 = ln(a0), b1 = a1, z = ln(x).
+        //
+        // Система:
+        // {b0*n + b1*E(zi) = E(gi)
+        // {b0*E(zi) + b1*E(zi^2) = E(zi*gi)
+
+        // ---- ПРЕОБРАЗОВАНИЯ К ЛИНЕЙНОЙ РЕГРЕССИИ ---- //
+        QVector<double> lnCursValues(cursValues.size());
+        QVector<double> lnNumericDates(numericDates.size());
+        for (int i = 0; i < cursValues.size(); ++i)
+            lnCursValues[i] = std::log(cursValues[i]);
+        for (int i = 0; i < numericDates.size(); ++i)
+            lnNumericDates[i] = std::log(numericDates[i]);
+
+        // ---- ОБРАБОТКА ДАННЫХ (БЛОК 1) ---- //
+        this->degree = 1;
+        // Вычисление значений квадратов, сумм и средних значений.
+        calculatePolynomRegressionSums(lnNumericDates, lnCursValues, this->degree, this->CalcColumns, this->ySquared, this->values);
+        // Заполнение таблицы.
+        fillTotalTable(ui->tableView_Calculations, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->CalcColumns, this->ySquared, this->degree);
+        // Заполнение текстового поля с суммами.
+        QString text_SUMs{ fillSUMsTextEdit(this->mode, this->values, this->degree) };
+        ui->textEdit_Sums->setText(text_SUMs);
+
+        // ---- ОБРАБОТКА ДАННЫХ (БЛОК 2) ---- //
+        // Вычисление вспомогательных величин (метод Крамера и для коэффициента Пирсона) и коэффициентов.
+        getCoefsForLinearOrInverse(false, this->values);
+        // Подсчет величин регрессии.
+        calculateLinearOrInverseRegression(this->mode, lnNumericDates, lnCursValues, this->predicts, this->values);
+        // Заполнение таблицы предсказаний модели.
+        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, lnNumericDates, lnCursValues, this->predicts, this->values);
         break;
+    }
     case 7:
     {
         setWindowTitle("Полиномиальная регрессия");
@@ -177,6 +305,8 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         }
         // Подсчет величин регрессии.
         calculatePolynomRegression(this->degree, this->numericDates, this->cursValues, this->predicts, this->values);
+        // Заполнение таблицы предсказаний модели.
+        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->predicts, this->values);
         break;
     }
     default:
@@ -186,26 +316,81 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
     }
 
     // Отображение значений величин под таблицей.
-    ui->label_meanX->setText(((mode != 1) ? "x\u0304 = " : "y\u0304 = ")  + QString::number(this->values.meanX, 'g', 6));
-    ui->label_meanY->setText(((mode != 1) ? "y\u0304 = " : "x\u0304 = ")  + QString::number(this->values.meanY, 'g', 6));
+    if (mode == 2)
+    {
+        ui->label_meanX->setText(("x\u0304 = ")  + QString::number(this->values.meanX, 'g', 6));
+        ui->label_meanY->setText(("lny\u0304 = ")  + QString::number(this->values.meanY, 'g', 6));
+    }
+    else if (mode == 3)
+    {
+        ui->label_meanX->setText(("1/x\u0304 = ")  + QString::number(this->values.meanX, 'g', 6));
+        ui->label_meanY->setText(("y\u0304 = ")  + QString::number(this->values.meanY, 'g', 6));;
+    }
+    else if (mode == 5)
+    {
+        ui->label_meanX->setText(("lnx\u0304 = ")  + QString::number(this->values.meanX, 'g', 6));
+        ui->label_meanY->setText(("y\u0304 = ")  + QString::number(this->values.meanY, 'g', 6));;
+    }
+    else if (mode == 6)
+    {
+        ui->label_meanX->setText(("lnx\u0304 = ")  + QString::number(this->values.meanX, 'g', 6));
+        ui->label_meanY->setText(("lny\u0304 = ")  + QString::number(this->values.meanY, 'g', 6));;
+    }
+    else
+    {
+        ui->label_meanX->setText(((mode != 1) ? "x\u0304 = " : "y\u0304 = ")  + QString::number(this->values.meanX, 'g', 6));
+        ui->label_meanY->setText(((mode != 1) ? "y\u0304 = " : "x\u0304 = ")  + QString::number(this->values.meanY, 'g', 6));
+    }
 
-    // Заполнение таблицы предсказаний модели.
-    fillPredictTable(ui->tableView_CalcPredicts, mode, this->dataColumn, this->numericDates, this->cursValues, this->predicts, this->values);
     // Отображение найденных значений под таблицей.
     ui->label_n->setText("n = " + QString::number(this->values.n));
+
     ui->label_Conclusion->setText(this->values.funcStr);
     ui->textEdit_RegCoef->setText(this->values.regCoefStr);
     ui->textEdit_RegCon->setText(this->values.regConStr);
-    ui->label_Sx2->setText(((mode != 1) ? "S<sub>x</sub><sup>2</sup> = " : "S<sub>y</sub><sup>2</sup> = ") + QString::number(this->values.Sx2, 'g', 6));
-    ui->label_Sy2->setText(((mode != 1) ? "S<sub>y</sub><sup>2</sup> = " : "S<sub>x</sub><sup>2</sup> = ") + QString::number(this->values.Sy2, 'g', 6));
-    ui->label_SxMean->setText(((mode != 1) ? "S<sub>x\u0304</sub> = " : "S<sub>y\u0304</sub> = ") + QString::number(this->values.SxMean, 'g', 6));
-    ui->label_SyMean->setText(((mode != 1) ? "S<sub>y\u0304</sub> = "  : "S<sub>x\u0304</sub> = ") + QString::number(this->values.SyMean, 'g', 6));
+
+    if (mode == 2)
+    {
+        ui->label_Sx2->setText(("(S<sub>x</sub>)<sup>2</sup> = ") + QString::number(this->values.Sx2, 'g', 6));
+        ui->label_Sy2->setText(("(S<sub>lny</sub>)<sup>2</sup> = ") + QString::number(this->values.Sy2, 'g', 6));
+        ui->label_SxMean->setText(("S<sub>x\u0304</sub> = ") + QString::number(this->values.SxMean, 'g', 6));
+        ui->label_SyMean->setText(("S<sub>lny\u0304</sub> = ") + QString::number(this->values.SyMean, 'g', 6));
+    }
+    else if (mode == 3)
+    {
+        ui->label_Sx2->setText(("(S<sub>1/x</sub>)<sup>2</sup> = ") + QString::number(this->values.Sx2, 'g', 6));
+        ui->label_Sy2->setText(("(S<sub>y</sub>)<sup>2</sup> = ") + QString::number(this->values.Sy2, 'g', 6));
+        ui->label_SxMean->setText(("S<sub>1/x\u0304</sub> = ") + QString::number(this->values.SxMean, 'g', 6));
+        ui->label_SyMean->setText(("S<sub>y\u0304</sub> = ") + QString::number(this->values.SyMean, 'g', 6));
+    }
+    else if (mode == 5)
+    {
+        ui->label_Sx2->setText(("(S<sub>lnx</sub>)<sup>2</sup> = ") + QString::number(this->values.Sx2, 'g', 6));
+        ui->label_Sy2->setText(("(S<sub>y</sub>)<sup>2</sup> = ") + QString::number(this->values.Sy2, 'g', 6));
+        ui->label_SxMean->setText(("S<sub>lnx\u0304</sub> = ") + QString::number(this->values.SxMean, 'g', 6));
+        ui->label_SyMean->setText(("S<sub>y\u0304</sub> = ") + QString::number(this->values.SyMean, 'g', 6));
+    }
+    else if (mode == 6)
+    {
+        ui->label_Sx2->setText(("(S<sub>lnx</sub>)<sup>2</sup> = ") + QString::number(this->values.Sx2, 'g', 6));
+        ui->label_Sy2->setText(("(S<sub>lny</sub>)<sup>2</sup> = ") + QString::number(this->values.Sy2, 'g', 6));
+        ui->label_SxMean->setText(("S<sub>lnx\u0304</sub> = ") + QString::number(this->values.SxMean, 'g', 6));
+        ui->label_SyMean->setText(("S<sub>lny\u0304</sub> = ") + QString::number(this->values.SyMean, 'g', 6));
+    }
+    else
+    {
+        ui->label_Sx2->setText(((mode != 1) ? "(S<sub>x</sub>)<sup>2</sup> = " : "(S<sub>y</sub>)<sup>2</sup> = ") + QString::number(this->values.Sx2, 'g', 6));
+        ui->label_Sy2->setText(((mode != 1) ? "(S<sub>y</sub>)<sup>2</sup> = " : "(S<sub>x</sub>)<sup>2</sup> = ") + QString::number(this->values.Sy2, 'g', 6));
+        ui->label_SxMean->setText(((mode != 1) ? "S<sub>x\u0304</sub> = " : "S<sub>y\u0304</sub> = ") + QString::number(this->values.SxMean, 'g', 6));
+        ui->label_SyMean->setText(((mode != 1) ? "S<sub>y\u0304</sub> = "  : "S<sub>x\u0304</sub> = ") + QString::number(this->values.SyMean, 'g', 6));
+    }
+
     ui->label_R2->setText("R<sup>2</sup> = " + QString::number(this->values.R2, 'g', 6));
     ui->label_Spoln->setText("S<sub>полн.</sub> = " + QString::number(this->values.Spoln, 'g', 6));
     ui->label_Sost->setText("S<sub>ост.</sub> = " + QString::number(this->values.Sost, 'g', 6));
     ui->label_Sregr->setText("S<sub>регр.</sub> = " + QString::number(this->values.Sregr, 'g', 6));
     ui->label_MSE->setText("MSE = " + QString::number(this->values.MSE, 'g', 6));
-    ui->label_R2Concl->setText("<b>Возможность прогноза (>=75%):</b> " + QString("<i>%1</i>").arg(this->values.R2 * 100 >= 75 ? "имеется." : "отсутствует."));
+    ui->label_R2Concl->setText("<b>Возможность прогноза (R<sup>2</sup>>=75%):</b> " + QString("<i>%1</i>").arg(this->values.R2 * 100 >= 75 ? "имеется." : "отсутствует."));
 
     // ---- ОТРИСОВКА ГРАФИКА ---- //
     (mode != 1) ? FormRegression::makePlot() : FormRegression::makeInversePlot();
@@ -238,7 +423,11 @@ void FormRegression::makePlot()
 
         x[i] = dateTimes[i].toSecsSinceEpoch(); // координата X
         y[i] = this->cursValues[i];             // исходные данные
-        y_T[i] = this->predicts[i];             // предсказание модели
+        // предсказание модели
+        if (mode == 2 || mode == 6)
+            y_T[i] = std::exp(this->predicts[i]);
+        else
+            y_T[i] = this->predicts[i];
     }
 
     // Если имеется точка прогноза.
@@ -259,9 +448,21 @@ void FormRegression::makePlot()
         case 0:
             yForecast = this->values.coeffs["a0"] + this->values.coeffs["a1"] * xForecast_calc;
             break;
+        case 2:
+            yForecast = std::exp(this->values.coeffs["a0"] + this->values.coeffs["a1"] * xForecast_calc);
+            break;
+        case 3:
+            yForecast = this->values.coeffs["a0"] + this->values.coeffs["a1"] * 1.0 / xForecast_calc;
+            break;
         case 4:
             for (int i = 0; i <= this->degree; ++i)
                 yForecast += values.coeffs.value(QString("a%1").arg(i), 0.0) * std::pow(xForecast_calc, i);
+            break;
+        case 5:
+            yForecast = this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::log(xForecast_calc);
+            break;
+        case 6:
+            yForecast = std::exp(this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::exp(xForecast_calc));
             break;
         case 7:
             for (int i = 0; i <= this->degree; ++i)
@@ -277,8 +478,6 @@ void FormRegression::makePlot()
     // Определение максимальной и минимальной даты.
     double minX = *std::min_element(x.constBegin(), x.constEnd());
     double maxX = *std::max_element(x.constBegin(), x.constEnd());
-    if (this->forecast_enabled)
-        maxX = std::max(maxX, xForecast_graphic);
     QDateTime minDate = QDateTime::fromSecsSinceEpoch(minX);
     QDateTime maxDate = QDateTime::fromSecsSinceEpoch(maxX);
 
@@ -291,10 +490,45 @@ void FormRegression::makePlot()
     ui->QCustomPlot_graphic->graph(0)->setName("Экспериментальные данные");
 
     // ----------------- График модели ----------------- //
+    QVector<double> temp_x = x;
+    QVector<double> temp_numericDates = this->numericDates;
+    QVector<double> temp_yT = y_T;
+
     ui->QCustomPlot_graphic->addGraph();
-    ui->QCustomPlot_graphic->graph(1)->setData(x, y_T);
     if (this->forecast_enabled)
-        ui->QCustomPlot_graphic->graph(1)->addData(xForecast_graphic, yForecast);
+    {
+        QDate lastDate = maxDate.date();
+        // Пока последняя дата < введенной, добавляем значения - иначе просто прямой соединит до точки прогноза.
+        while (lastDate < this->select_date)
+        {
+            QDate epoch(1970, 1, 1);
+            lastDate = lastDate.addDays(1);
+
+            // Значение даты в секундах для оси абсцисс (по убыванию идут)
+            temp_x.prepend(QDateTime(lastDate, QTime(0,0)).toSecsSinceEpoch());
+            // Значения даты в днях для расчета предсказанного моделью значения (по убыванию идут).
+            temp_numericDates.prepend(epoch.daysTo(lastDate)/10000.0);
+
+            // --- ВЫБОР МОДЕЛИ ---
+            if (this->mode == 0) temp_yT.prepend(values.coeffs["a0"] + values.coeffs["a1"] * temp_numericDates[0]);
+            if (this->mode == 2) temp_yT.prepend(std::exp(this->values.coeffs["a0"] + this->values.coeffs["a1"] * temp_numericDates[0]));
+            if (this->mode == 3) temp_yT.prepend(this->values.coeffs["a0"] + this->values.coeffs["a1"] * 1.0 / temp_numericDates[0]);
+            if (this->mode == 4 || this->mode == 7)
+            {
+                double temp_y{};
+                for (int i = 0; i <= this->degree; ++i)
+                    temp_y += values.coeffs.value(QString("a%1").arg(i), 0.0) * std::pow(temp_numericDates[0], i);
+                temp_yT.prepend(temp_y);
+            }
+            if (this->mode == 5) temp_yT.prepend(this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::log(temp_numericDates[0]));
+            if (this->mode == 6) temp_yT.prepend(std::exp(this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::exp(temp_numericDates[0])));
+        }
+        temp_x.prepend(xForecast_graphic);
+        temp_yT.prepend(yForecast);
+        // Переопределение максимальной даты.
+        maxDate = QDateTime(lastDate, QTime(0,0));
+    }
+    ui->QCustomPlot_graphic->graph(1)->setData(temp_x, temp_yT);
     ui->QCustomPlot_graphic->graph(1)->setPen(QPen(Qt::red, 2));
 
     // ----------------- Подпись коэф. детерминации у уравнению модели  ----------------- //
@@ -508,8 +742,6 @@ void FormRegression::makeInversePlot()
     // Определение максимальной и минимальной даты.
     double minY = *std::min_element(y.constBegin(), y.constEnd());
     double maxY = *std::max_element(y.constBegin(), y.constEnd());
-    if (this->forecast_enabled)
-        maxY = std::max(maxY, yForecast_graphic);
     QDateTime minDate = QDateTime::fromSecsSinceEpoch(minY);
     QDateTime maxDate = QDateTime::fromSecsSinceEpoch(maxY);
 
@@ -522,10 +754,33 @@ void FormRegression::makeInversePlot()
     ui->QCustomPlot_graphic->graph(0)->setName("Экспериментальные данные");
 
     // ----------------- График модели ----------------- //
+    QVector<double> temp_x = x;
+    QVector<double> temp_numericDates = this->numericDates;
+    QVector<double> temp_yReg = yReg;
+
     ui->QCustomPlot_graphic->addGraph();
-    ui->QCustomPlot_graphic->graph(1)->setData(x, yReg);
     if (this->forecast_enabled)
-        ui->QCustomPlot_graphic->graph(1)->addData(xForecast, yForecast_graphic);
+    {
+        QDate lastDate = maxDate.date();
+        // Пока последняя дата < введенной, добавляем значения - иначе просто прямой соединит до точки прогноза.
+        while (lastDate < this->select_date)
+        {
+            QDate epoch(1970, 1, 1);
+            lastDate = lastDate.addDays(1);
+
+            // Значение даты в секундах для оси ординат (по убыванию идут)
+            temp_yReg.prepend(QDateTime(lastDate, QTime(0,0)).toSecsSinceEpoch());
+            // Значения даты в днях для расчета предсказанного моделью значения (по убыванию идут).
+            temp_numericDates.prepend(epoch.daysTo(lastDate)/10000.0);
+
+            temp_x.prepend((temp_numericDates[0] - this->values.coeffs["b0"])/this->values.coeffs["b1"]);
+        }
+        temp_x.prepend(xForecast);
+        temp_yReg.prepend(yForecast_graphic);
+        // Переопределение максимальной даты.
+        maxDate = QDateTime(lastDate, QTime(0,0));
+    }
+    ui->QCustomPlot_graphic->graph(1)->setData(temp_x, temp_yReg);
     ui->QCustomPlot_graphic->graph(1)->setPen(QPen(Qt::red, 2));
 
     // ----------------- Подпись коэф. детерминации у уравнению модели  ----------------- //

@@ -23,10 +23,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButton_LinearReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
     connect(ui->pushButton_InverseLinearReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
     connect(ui->pushButton_ExpReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
-
+    connect(ui->pushButton_HyperReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
     connect(ui->pushButton_ParabReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
-
-
+    connect(ui->pushButton_LogReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
+    connect(ui->pushButton_PowerReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
     connect(ui->pushButton_PolynomReg, &QPushButton::clicked, this, &MainWindow::openRegressionForm);
 }
 
@@ -56,22 +56,6 @@ void MainWindow::on_pushButton_loadFile_clicked()
         ui->label_FilePath->setCursor(Qt::IBeamCursor);
         ui->label_FilePath->setTextInteractionFlags(Qt::TextSelectableByMouse);
     }
-    else
-    {
-        ui->tableView_TableData->setModel(nullptr);
-        ui->label_FilePath->clear();
-        ui->label_FilePath->setCursor(Qt::ArrowCursor);
-        ui->label_FilePath->setTextInteractionFlags(Qt::NoTextInteraction);
-        // деактивация кнопок
-        ui->pushButton_LinearReg->setEnabled(false);
-        ui->pushButton_InverseLinearReg->setEnabled(false);
-        ui->pushButton_ParabReg->setEnabled(false);
-        ui->pushButton_ExpReg->setEnabled(false);
-        ui->pushButton_HyperReg->setEnabled(false);
-        ui->pushButton_LogReg->setEnabled(false);
-        ui->pushButton_PowerReg->setEnabled(false);
-        ui->pushButton_PolynomReg->setEnabled(false);
-    }
 }
 
 void MainWindow::show_window()
@@ -92,8 +76,14 @@ void MainWindow::openRegressionForm()
         idx = 1;
     else if (button->objectName() == "pushButton_ExpReg")
         idx = 2;
+    else if (button->objectName() == "pushButton_HyperReg")
+        idx = 3;
     else if (button->objectName() == "pushButton_ParabReg")
         idx = 4;
+    else if (button->objectName() == "pushButton_LogReg")
+        idx = 5;
+    else if (button->objectName() == "pushButton_PowerReg")
+        idx = 6;
     else if (button->objectName() == "pushButton_PolynomReg")
         idx = 7;
 

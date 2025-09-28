@@ -565,49 +565,6 @@ QPushButton:pressed {
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_HyperReg">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <italic>true</italic>
-              </font>
-             </property>
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QPushButton {
-	color: #000000;
-    background-color: #9595CD; 
-    border-radius: 12px; 
-    border: 2px solid #BFC6E2;
-    padding: 5px 10px;
-}
-
-QPushButton:hover {
-    background-color: #AA55FF; 
-}
-
-QPushButton:pressed {
-    background-color: #7B79AE;
-}
-</string>
-             </property>
-             <property name="text">
-              <string>Гиперболическая регрессия</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout_Block4">
-           <item>
             <widget class="QPushButton" name="pushButton_PowerReg">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -643,6 +600,49 @@ QPushButton:pressed {
              </property>
              <property name="text">
               <string>Степенная регрессия</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_Block4">
+           <item>
+            <widget class="QPushButton" name="pushButton_HyperReg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <italic>true</italic>
+              </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	color: #000000;
+    background-color: #9595CD; 
+    border-radius: 12px; 
+    border: 2px solid #BFC6E2;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #AA55FF; 
+}
+
+QPushButton:pressed {
+    background-color: #7B79AE;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Гиперболическая регрессия</string>
              </property>
             </widget>
            </item>
