@@ -43,7 +43,7 @@ void calculatePolynomRegressionSums(const QVector<double> &numericDates,
                                       QVector<double> &ySquared,
                                       RegressionValues &values);
 // Метод Гаусса.
-bool gaussSolve(QVector<QVector<double>> A, QVector<double> b);
+bool gaussSolve(QVector<QVector<double>> &A, QVector<double> &b, QVector<double> &solve);
 // Для полиномиальных видов регрессий (потсроение матриц A и B для метода Гаусса).
 bool buildAndSolvePolynomRegression(RegressionValues &values, const int &degree);
 

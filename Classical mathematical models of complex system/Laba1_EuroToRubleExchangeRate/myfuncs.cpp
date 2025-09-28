@@ -35,6 +35,7 @@ bool readDataAndCurs(const QTableView *tableView_TableData, QVector<QString> &da
     cursValues.clear();
 
     QDate epoch(1970, 1, 1);
+    QVector<int> rawDates; // временное хранилище дат в днях
 
     for (int r = 0; r < model->rowCount(); ++r)
     {
@@ -44,11 +45,11 @@ bool readDataAndCurs(const QTableView *tableView_TableData, QVector<QString> &da
         if (date.isValid())
         {
             dataColumn.append(date.toString("dd.MM.yyyy"));
-            numericDates.append(epoch.daysTo(date)/10000.0); // Чтобы не работать с большими числами, уменьшим в 10000 раз число дней.
+            rawDates.append(epoch.daysTo(date));
         }
         else
         {
-            numericDates.append(0);
+            rawDates.append(0);
             QMessageBox::critical(nullptr, "Ошибка", QString("Не удалось корректно обработать дату: %1!").arg(valData.toString()));
             return false;
         }
@@ -66,6 +67,20 @@ bool readDataAndCurs(const QTableView *tableView_TableData, QVector<QString> &da
             cursValues.append(0.0);
             QMessageBox::critical(nullptr, "Ошибка", QString("Не удалось корректно обработать курс: %1!").arg(valCurs.toString()));
             return false;
+        }
+    }
+
+    // --- Нормализация дат ---
+    if (!rawDates.isEmpty())
+    {
+        int minDateDays = *std::min_element(rawDates.begin(), rawDates.end());
+        int maxDateDays = *std::max_element(rawDates.begin(), rawDates.end());
+        int range = maxDateDays - minDateDays;
+
+        numericDates.resize(rawDates.size());
+        for (int i = 0; i < rawDates.size(); ++i)
+        {
+            numericDates[i] = 0.01 + 0.99 * double(rawDates[i] - minDateDays) / double(range);
         }
     }
 

@@ -79,7 +79,7 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
         // Подсчет величин регрессии.
         calculateLinearOrInverseRegression(this->mode, this->cursValues, this->numericDates, this->predicts, this->values);
         // Заполнение таблицы предсказаний модели.
-        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, this->numericDates, this->cursValues, this->predicts, this->values);
+        fillPredictTable(ui->tableView_CalcPredicts, this->mode, this->dataColumn, this->cursValues, this->numericDates, this->predicts, this->values);
         break;
     }
     case 2:
@@ -413,16 +413,14 @@ void FormRegression::makePlot()
     QVector<double> x(n), y(n), y_T(n);
     QVector<QDateTime> dateTimes(n);
 
-    // Точка прогноза.
-    double xForecast_graphic{}, yForecast{};
-
+    // Вычисление векторов для построения графика.
     for (int i = 0; i < n; ++i)
     {
         QDate date = QDate::fromString(this->dataColumn[i], "dd.MM.yyyy");
         dateTimes[i] = QDateTime(date, QTime(0,0));
 
         x[i] = dateTimes[i].toSecsSinceEpoch(); // координата X
-        y[i] = this->cursValues[i];             // исходные данные
+        y[i] = this->cursValues[i];             // координата Y
         // предсказание модели
         if (mode == 2 || mode == 6)
             y_T[i] = std::exp(this->predicts[i]);
@@ -430,7 +428,14 @@ void FormRegression::makePlot()
             y_T[i] = this->predicts[i];
     }
 
+    // Определение максимальной и минимальной даты.
+    double minX = *std::min_element(x.constBegin(), x.constEnd());
+    double maxX = *std::max_element(x.constBegin(), x.constEnd());
+    QDateTime minDate = QDateTime::fromSecsSinceEpoch(minX);
+    QDateTime maxDate = QDateTime::fromSecsSinceEpoch(maxX);
+
     // Если имеется точка прогноза.
+    double xForecast_graphic{}, yForecast{};
     if (this->forecast_enabled)
     {
         // Преобразуем в QDateTime и в секунды указанную дату.
@@ -440,7 +445,7 @@ void FormRegression::makePlot()
 
         // Координата X для расчетов.
         QDate epoch(1970, 1, 1);
-        double xForecast_calc = epoch.daysTo(this->select_date)/10000.0;
+        double xForecast_calc = 0.01 + 0.99 * double(epoch.daysTo(this->select_date) - epoch.daysTo(minDate.date())) / double(epoch.daysTo(maxDate.date()) - epoch.daysTo(minDate.date()));
 
         // Координата Y.
         switch(this->mode)
@@ -471,15 +476,7 @@ void FormRegression::makePlot()
         default:
             break;
         }
-
-
     }
-
-    // Определение максимальной и минимальной даты.
-    double minX = *std::min_element(x.constBegin(), x.constEnd());
-    double maxX = *std::max_element(x.constBegin(), x.constEnd());
-    QDateTime minDate = QDateTime::fromSecsSinceEpoch(minX);
-    QDateTime maxDate = QDateTime::fromSecsSinceEpoch(maxX);
 
     // ----------------- График экспериментальных данных ----------------- //
     ui->QCustomPlot_graphic->addGraph();
@@ -507,7 +504,7 @@ void FormRegression::makePlot()
             // Значение даты в секундах для оси абсцисс (по убыванию идут)
             temp_x.prepend(QDateTime(lastDate, QTime(0,0)).toSecsSinceEpoch());
             // Значения даты в днях для расчета предсказанного моделью значения (по убыванию идут).
-            temp_numericDates.prepend(epoch.daysTo(lastDate)/10000.0);
+            temp_numericDates.prepend(0.01 + 0.99 * double(epoch.daysTo(lastDate) - epoch.daysTo(minDate.date())) / double(epoch.daysTo(maxDate.date()) - epoch.daysTo(minDate.date())));
 
             // --- ВЫБОР МОДЕЛИ ---
             if (this->mode == 0) temp_yT.prepend(values.coeffs["a0"] + values.coeffs["a1"] * temp_numericDates[0]);
@@ -704,9 +701,7 @@ void FormRegression::makeInversePlot()
     QVector<double> x(n), y(n), yReg(n);
     QVector<QDateTime> dateTimes(n);
 
-    // Точка прогноза.
-    double yForecast_graphic{}, xForecast{};
-
+    // Вычисление векторов для построения графика.
     for (int i = 0; i < n; ++i)
     {
         QDate date = QDate::fromString(this->dataColumn[i], "dd.MM.yyyy");
@@ -714,10 +709,24 @@ void FormRegression::makeInversePlot()
 
         x[i] = this->cursValues[i];                 // координата X (курс)
         y[i] = dateTimes[i].toSecsSinceEpoch();     // координата Y (дата)
-        yReg[i] = this->predicts[i]*10000*24*60*60; // значения регрессии
+
+    }
+
+    // Определение максимальной и минимальной даты.
+    double minY = *std::min_element(y.constBegin(), y.constEnd());
+    double maxY = *std::max_element(y.constBegin(), y.constEnd());
+    QDateTime minDate = QDateTime::fromSecsSinceEpoch(minY);
+    QDateTime maxDate = QDateTime::fromSecsSinceEpoch(maxY);
+
+    // значения регрессии
+    for (int i = 0; i < n; ++i)
+    {
+        QDate epoch(1970, 1, 1);
+        yReg[i] = ((this->predicts[i] - 0.01) / 0.99 * double(epoch.daysTo(maxDate.date()) - epoch.daysTo(minDate.date())) + epoch.daysTo(minDate.date()))*24*60*60;
     }
 
     // Если имеется точка прогноза.
+    double yForecast_graphic{}, xForecast{};
     if (this->forecast_enabled)
     {
         // Преобразуем в QDateTime и в секунды указанную дату.
@@ -727,7 +736,7 @@ void FormRegression::makeInversePlot()
 
         // Координата X для расчетов.
         QDate epoch(1970, 1, 1);
-        double yForecast_calc = epoch.daysTo(this->select_date)/10000.0;
+        double yForecast_calc = 0.01 + 0.99 * double(epoch.daysTo(this->select_date) - epoch.daysTo(minDate.date())) / double(epoch.daysTo(maxDate.date()) - epoch.daysTo(minDate.date()));
 
         // --- Координата Y ---
         // Решение уравнения [x = b0 + b1 * y] будет относительно неизвестной y (курса Евро), т.к. мы хотим предсказывать курс по дате, а не наоборот.
@@ -738,12 +747,6 @@ void FormRegression::makeInversePlot()
         // y = (x - b0) / b1.
         xForecast = (yForecast_calc - this->values.coeffs["b0"])/this->values.coeffs["b1"];
     }
-
-    // Определение максимальной и минимальной даты.
-    double minY = *std::min_element(y.constBegin(), y.constEnd());
-    double maxY = *std::max_element(y.constBegin(), y.constEnd());
-    QDateTime minDate = QDateTime::fromSecsSinceEpoch(minY);
-    QDateTime maxDate = QDateTime::fromSecsSinceEpoch(maxY);
 
     // ----------------- График экспериментальных данных ----------------- //
     ui->QCustomPlot_graphic->addGraph();
@@ -771,7 +774,7 @@ void FormRegression::makeInversePlot()
             // Значение даты в секундах для оси ординат (по убыванию идут)
             temp_yReg.prepend(QDateTime(lastDate, QTime(0,0)).toSecsSinceEpoch());
             // Значения даты в днях для расчета предсказанного моделью значения (по убыванию идут).
-            temp_numericDates.prepend(epoch.daysTo(lastDate)/10000.0);
+            temp_numericDates.prepend(0.01 + 0.99 * double(epoch.daysTo(lastDate) - epoch.daysTo(minDate.date())) / double(epoch.daysTo(maxDate.date()) - epoch.daysTo(minDate.date())));
 
             temp_x.prepend((temp_numericDates[0] - this->values.coeffs["b0"])/this->values.coeffs["b1"]);
         }
