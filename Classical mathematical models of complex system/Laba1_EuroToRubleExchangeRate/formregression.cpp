@@ -265,17 +265,15 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
     {
         setWindowTitle("Полиномиальная регрессия");
         // Получение степени полинома.
-        bool ok;
-        int degree = QInputDialog::getInt(
-            this,
-            "Степень полиномиальной регрессиии",
-            "Укажите степень полинома (по умолчанию 3):",
-            3, // по умолчанию
-            3, // min
-            10,// max
-            1, // шаг
-            &ok// нажата ли кнопка ОК
-            );
+        QInputDialog dlg(this);
+        dlg.setInputMode(QInputDialog::IntInput);
+        dlg.setWindowTitle("Степень полиномиальной регрессиии (3 - 20)");
+        dlg.setLabelText("Укажите степень полинома (по умолчанию 6):");
+        dlg.setIntRange(3, 20);
+        dlg.setIntStep(1);
+        dlg.setIntValue(6);
+        dlg.resize(400, 200);
+        int degree = dlg.exec() == QDialog::Accepted ? dlg.intValue() : 6;
 
         // y = a0 + a1*x + a2*x^2 + ... + an*x^n
         //
@@ -446,7 +444,7 @@ void FormRegression::makePlot()
         // Координата X для расчетов.
         QDate epoch(1970, 1, 1);
         double xForecast_calc = 0.01 + 0.99 * double(epoch.daysTo(this->select_date) - epoch.daysTo(minDate.date())) / double(epoch.daysTo(maxDate.date()) - epoch.daysTo(minDate.date()));
-
+        qDebug() << xForecast_calc;
         // Координата Y.
         switch(this->mode)
         {
@@ -467,7 +465,7 @@ void FormRegression::makePlot()
             yForecast = this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::log(xForecast_calc);
             break;
         case 6:
-            yForecast = std::exp(this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::exp(xForecast_calc));
+            yForecast = std::exp(this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::log(xForecast_calc));
             break;
         case 7:
             for (int i = 0; i <= this->degree; ++i)
@@ -518,7 +516,7 @@ void FormRegression::makePlot()
                 temp_yT.prepend(temp_y);
             }
             if (this->mode == 5) temp_yT.prepend(this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::log(temp_numericDates[0]));
-            if (this->mode == 6) temp_yT.prepend(std::exp(this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::exp(temp_numericDates[0])));
+            if (this->mode == 6) temp_yT.prepend(std::exp(this->values.coeffs["a0"] + this->values.coeffs["a1"] * std::log(temp_numericDates[0])));
         }
         temp_x.prepend(xForecast_graphic);
         temp_yT.prepend(yForecast);
@@ -677,10 +675,11 @@ void FormRegression::makePlot()
     legendFont.setPointSize(8);
     legendFont.setWeight(QFont::Normal);
     ui->QCustomPlot_graphic->legend->setFont(legendFont);
-    ui->QCustomPlot_graphic->legend->setVisible(true);
+    if (this->degree > 6) ui->QCustomPlot_graphic->legend->setVisible(false);
+    else ui->QCustomPlot_graphic->legend->setVisible(true);
     ui->QCustomPlot_graphic->legend->setBrush(QColor(255, 255, 255, 150));
     ui->QCustomPlot_graphic->legend->setBorderPen(QPen(QColor(150, 150, 150, 180)));
-    ui->QCustomPlot_graphic->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignLeft | Qt::AlignTop);
+    ui->QCustomPlot_graphic->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignRight | Qt::AlignTop);
 
     // Отрисовка.
     ui->QCustomPlot_graphic->replot();
@@ -938,7 +937,7 @@ void FormRegression::makeInversePlot()
     ui->QCustomPlot_graphic->legend->setVisible(true);
     ui->QCustomPlot_graphic->legend->setBrush(QColor(255, 255, 255, 150));
     ui->QCustomPlot_graphic->legend->setBorderPen(QPen(QColor(150, 150, 150, 180)));
-    ui->QCustomPlot_graphic->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignLeft | Qt::AlignTop);
+    ui->QCustomPlot_graphic->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignRight | Qt::AlignTop);
 
     // Отрисовка.
     ui->QCustomPlot_graphic->replot();

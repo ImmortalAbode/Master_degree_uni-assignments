@@ -908,7 +908,7 @@ void getFuncCoefDescr(const int& mode, RegressionValues &values)
         double b1 = values.coeffs.value("a1", 0.0);
 
         QString sign_b = (b1 >= 0) ? " + " : " - ";
-        values.funcStr = QString("y = %1%2%3 \u00B7 z")
+        values.funcStr = QString("lny = %1%2%3 \u00B7 lnx")
                              .arg(QString::number(b0, 'g', 6))
                              .arg(sign_b)
                              .arg(QString::number(std::abs(b1), 'g', 6));
