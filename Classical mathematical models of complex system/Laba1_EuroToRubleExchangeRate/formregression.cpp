@@ -394,7 +394,9 @@ FormRegression::FormRegression(const int &mode, const QVector<QString> &dataColu
     (mode != 1) ? FormRegression::makePlot() : FormRegression::makeInversePlot();
 
     // ---- УСТАНОВКА ДАТЫ ---- //
-    ui->dateEdit->setDate(QDate::currentDate().addDays(1));
+    QDate lastDate = QDate::fromString(this->dataColumn.first(), "dd.MM.yyyy");
+    QDate newDate = lastDate.addDays(1);
+    ui->dateEdit->setDate(newDate);
 }
 
 void FormRegression::makePlot()
@@ -444,7 +446,7 @@ void FormRegression::makePlot()
         // Координата X для расчетов.
         QDate epoch(1970, 1, 1);
         double xForecast_calc = 0.01 + 0.99 * double(epoch.daysTo(this->select_date) - epoch.daysTo(minDate.date())) / double(epoch.daysTo(maxDate.date()) - epoch.daysTo(minDate.date()));
-        qDebug() << xForecast_calc;
+
         // Координата Y.
         switch(this->mode)
         {
@@ -601,11 +603,8 @@ void FormRegression::makePlot()
     auto xRange = ui->QCustomPlot_graphic->xAxis->range();
     auto yRange = ui->QCustomPlot_graphic->yAxis->range();
 
-    double xPadding = 86400; // 1 день отступ
-    double yPadding = 0.5;   // 0.5 отступ
-
-    if (this->forecast_enabled) xPadding += (xForecast_graphic - x.last()) / 10.0;
-    if (this->forecast_enabled) yPadding += std::abs(yForecast - y_T.last()) / 10.0;
+    double xPadding = (temp_x.first() - x.first()) / 10.0 + 86400; // 1 день отступ
+    double yPadding = (temp_yT.first() - y.first()) / 10.0 + 0.5;   // 0.5 отступ
 
     ui->QCustomPlot_graphic->xAxis->setRange(xRange.lower - xPadding, xRange.upper + xPadding);
     ui->QCustomPlot_graphic->yAxis->setRange(yRange.lower - yPadding, yRange.upper + yPadding);
@@ -860,8 +859,8 @@ void FormRegression::makeInversePlot()
     auto xRange = ui->QCustomPlot_graphic->xAxis->range();
     auto yRange = ui->QCustomPlot_graphic->yAxis->range();
 
-    double xPadding = 0.5;   // 0.5 отступ
-    double yPadding = 86400; // 10 дней отступ
+    double yPadding = (temp_yReg.first() - y.first()) / 10.0 + 86400; // 1 день отступ
+    double xPadding = (temp_x.first() - x.first()) / 10.0 + 0.5;   // 0.5 отступ
 
     if (this->forecast_enabled) xPadding += std::abs(xForecast - x.last()) / 10.0;
     if (this->forecast_enabled) yPadding += (yForecast_graphic - yReg.last()) / 10.0;

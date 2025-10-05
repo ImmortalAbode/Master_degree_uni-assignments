@@ -32,6 +32,8 @@ FORMS += \
     formregression.ui \
     mainwindow.ui
 
+win32:RC_FILE = ico_resource.rc
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
