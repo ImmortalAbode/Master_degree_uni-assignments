@@ -487,7 +487,7 @@ bool gaussSolve(QVector<QVector<double>> &A, QVector<double> &b, QVector<double>
             return false;
         }
         for (int j = k; j < n; ++j)
-            A[k][j] /= pivot; // при j=k эл-т главное диагонали становится равен 1
+            A[k][j] /= pivot; // при j=k эл-т главной диагонали становится равен 1
         b[k] /= pivot;
 
         // Обнуляем элементы под главной диагональю.

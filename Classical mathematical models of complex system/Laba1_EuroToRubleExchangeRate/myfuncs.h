@@ -61,7 +61,7 @@ void fillPredictTable(QTableView *tableView,
                       const RegressionValues &values);
 
 // ---- Расчетные функции ---- //
-// -- Обшие --
+// -- Общие --
 // Получение выводов о коэффициенте Пирсона (коэф. корреляции о линейности связи между данными).
 void getRegConnDesc(RegressionValues &values);
 // Вспомогательные величины и коэффициенты для линейных видов регрессии.
