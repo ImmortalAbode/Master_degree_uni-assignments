@@ -52,7 +52,7 @@ class ComplexationSimulator:
         # Цикл по временным шагам.
         for t in np.arange(0, self.flight_duration, self.dt):
             # Если повторяющийся интервал стал >= self.GPS_period, то спутник виден.
-            if time_between_interval >= self.GPS_period:
+            if time_between_interval - self.dt >= self.GPS_period:
                 error -= error * (1 - exp(-self.k * self.dt))
                 # Если time_between_interval == self.GPS_period + self.GPS_visible_duration, то интервал закончился.
                 # eps = 1e-6 - особенность машинного вычисления.
@@ -80,7 +80,7 @@ class ComplexationSimulator:
     def show_plot(self):
         """ Отрисовка графиков """
         # Вычисление величин для сравнительного анализа.
-        start_complexation_ind = int(self.GPS_period/self.dt - 1)
+        start_complexation_ind = int(self.GPS_period/self.dt)
         E0 = self.errors_without_correction[start_complexation_ind]
         q = (1 - np.exp(-self.k * self.GPS_visible_duration)) * E0
         Eq = E0 - q
@@ -105,7 +105,7 @@ class ComplexationSimulator:
         axs.plot(t, self.errors_with_correction, label="Ошибка системы комплексирования", color='blue', linestyle='--')
         axs.plot(t, self.errors_without_correction, label="Ошибка бортовой системы БЛА", color='red')
         axs.plot(self.GPS_period, E0, 'co', markersize=4, label='$E_0$ - начало комплексирования (в первый раз)')
-        axs.plot(self.GPS_period + GPS_visible_duration, Eq, 'co', markersize=4, label='$E_q$ - конец комплексирования (в первый раз)')
+        axs.plot(self.GPS_period + self.GPS_visible_duration, Eq, 'co', markersize=4, label='$E_q$ - конец комплексирования (в первый раз)')
         axs.set_title("Сравнение погрешностей бортовой и комплексной системы", fontsize=14)
         axs.set_xlabel("t (время, с)", fontsize=9)
         axs.set_ylabel("$\epsilon$ (ошибка, м)", fontsize=9)
