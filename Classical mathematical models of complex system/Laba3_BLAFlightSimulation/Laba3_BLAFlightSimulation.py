@@ -215,12 +215,13 @@ class RealisticComplexation:
         - dt                    : временной шаг моделирования.
     """
     def __init__(self, 
-                 flight_duration, GPS_period, GPS_visible_duration, accuracy, C, dt):
+                 flight_duration, GPS_period, GPS_visible_duration, accuracy, Cx, Cy, dt):
         self.flight_duration = flight_duration
         self.GPS_period = GPS_period
         self.GPS_visible_duration = GPS_visible_duration
         self.accuracy = accuracy
-        self.C = C
+        self.Cx = Cx
+        self.Cy = Cy
         self.dt = dt
         # Параметр комплексирования k.
         self.k = self._calculate_k_parameter()
@@ -276,8 +277,8 @@ class RealisticComplexation:
             # Иначе спутник не виден.
             else:
                 # Последняя запомненная ошибка.
-                error_x = error_x
-                error_y = error_y
+                error_x += self.Cx * time_between_interval * self.dt
+                error_y += self.Cy * time_between_interval * self.dt
                 time_between_interval += self.dt
             errors_x.append(error_x)
             errors_y.append(error_y)
@@ -296,8 +297,8 @@ class RealisticComplexation:
         t_values = np.arange(0, self.flight_duration + self.dt, self.dt)
         for i, t in enumerate(t_values):
             # Ошибка = GPS - СВС (система воздушных сигналов). По идее изменяется квадратичным законом.
-            error_x += self.C * t * self.dt
-            error_y += self.C * t * self.dt
+            error_x += self.Cx * t * self.dt
+            error_y += self.Cy * t * self.dt
             errors_x.append(error_x)
             errors_y.append(error_y)
         return errors_x, errors_y
@@ -318,15 +319,16 @@ class ModelManager:
         - wind_angle            : угол ветра;
         - A_angle               : угол атаки БЛА;
         - GPS_period            : период до появления спутника (GPS);
-        - GPS_visible_duration   : время видимости спутника (GPS);
-        - C                     : коэффициент роста квадратичной зависимости ошибки определения положения координат БЛА от времени полета;
+        - GPS_visible_duration  : время видимости спутника (GPS);
+        - Cx                    : коэффициент роста квадратичной зависимости ошибки определения положения координат БЛА от времени полета по долготе;
+        - Cy                    : коэффициент роста квадратичной зависимости ошибки определения положения координат БЛА от времени полета по широте;
         - flight_duration       : временной промежуток моделирования;
         - dt                    : временной шаг моделирования;
         - x_sp                  : координаты положения БЛА по GPS - долгота (м);
         - y_sp                  : координаты положения БЛА по GPS - широта (м).
     """
     def __init__(self, V_air=100, V_wind=25, K_angle=45, wind_angle=120, A_angle=5,
-                 GPS_period=1200, GPS_visible_duration=60, accuracy=0.95, C=0.001,
+                 GPS_period=1200, GPS_visible_duration=60, accuracy=0.95, Cx=0.001, Cy=0.001,
                  flight_duration=3600, dt=0.1, x_sp=None, y_sp=None):
         # GPS.
         self.x_sp = x_sp
@@ -336,9 +338,9 @@ class ModelManager:
         self.BLA_flight = FlightModelSimulator(V_air, V_wind, K_angle, wind_angle, A_angle, flight_duration, dt)
         # Моделирование ошибок полета БЛА.
         if self.x_sp is None and self.y_sp is None:
-            self.BLA_errors = ComplexationSimulator(flight_duration, GPS_period, GPS_visible_duration, accuracy, C, dt)
+            self.BLA_errors = ComplexationSimulator(flight_duration, GPS_period, GPS_visible_duration, accuracy, Cx, dt)
         else:
-            self.realistic_BLA_errors = RealisticComplexation(flight_duration, GPS_period, GPS_visible_duration, accuracy, C, dt)
+            self.realistic_BLA_errors = RealisticComplexation(flight_duration, GPS_period, GPS_visible_duration, accuracy, Cx, Cy, dt)
 
     def run(self):
         """ Реализация моделирования полета БЛА и расчета ошибок """
@@ -471,7 +473,7 @@ if __name__ == "__main__":
     
     # --- Моделирование ---
     sim_BLA = ModelManager(V_air=V_air, V_wind=V_wind, K_angle=K_angle, wind_angle=wind_angle, A_angle=A_angle,
-                           GPS_period=GPS_period, GPS_visible_duration=GPS_visible_duration, C=C,
+                           GPS_period=GPS_period, GPS_visible_duration=GPS_visible_duration, Cx=C, Cy=C,
                            flight_duration=flight_duration, dt=dt)
 
     # 2. Экспериментальные данные.
@@ -482,7 +484,7 @@ if __name__ == "__main__":
     data = ExcelParser(filepath=filepath).execute_data_from_Excel(sheet_name=sheet_name)
     # --- Моделирование ---
     realistic_BLA = ModelManager(V_air=data['Vpr'], V_wind=data['W'], K_angle=data['psi'], wind_angle=data['omega'], A_angle=data['tkk'], 
-                                 GPS_period=200, GPS_visible_duration=50, accuracy=0.95, C=0.05, flight_duration=data['t'][-1], 
+                                 GPS_period=200, GPS_visible_duration=50, accuracy=0.95, Cx=0.057, Cy=0.1, flight_duration=data['t'][-1], 
                                  dt=data['t'][1]-data['t'][0], x_sp=data['Z'],y_sp=data['X'])
     
     # 1,2. --- Визуализация ---
