@@ -50,9 +50,9 @@ class ComplexationSimulator:
         errors = [] # Память ошибок по долготе и широте (в данном случае они одинаковые).
         time_between_interval = 0   # Повторяющийся интервал без спутника и со спутником (self.GPS_period + self.GPS_visible_duration).
         # Цикл по временным шагам.
-        for t in np.arange(0, self.flight_duration, self.dt):
+        for t in np.arange(0, self.flight_duration + self.dt, self.dt):
             # Если повторяющийся интервал стал >= self.GPS_period, то спутник виден.
-            if time_between_interval - self.dt >= self.GPS_period:
+            if time_between_interval - self.GPS_period >= 1e-6:
                 error -= error * (1 - exp(-self.k * self.dt))
                 # Если time_between_interval == self.GPS_period + self.GPS_visible_duration, то интервал закончился.
                 # eps = 1e-6 - особенность машинного вычисления.
@@ -72,7 +72,7 @@ class ComplexationSimulator:
         error = 0   # При t=0 ошибка=0.
         errors = [] # Память ошибок по долготе и широте (в данном случае они одинаковые).
         # Цикл по временным шагам.
-        for t in np.arange(0, self.flight_duration, self.dt):
+        for t in np.arange(0, self.flight_duration + self.dt, self.dt):
             error += self.C * t * self.dt
             errors.append(error)
         return errors
@@ -99,7 +99,7 @@ class ComplexationSimulator:
         )
 
         # Расчет значений.
-        t = [i for i in np.arange(0, self.flight_duration, self.dt)]
+        t = [i for i in np.arange(0, self.flight_duration + self.dt, self.dt)]
 
         # Отрисовка графиков погрешностей и маркеров сравнительного анализа (один раз, чтобы не перегружать график).
         axs.plot(t, self.errors_with_correction, label="Ошибка системы комплексирования", color='blue', linestyle='--')
@@ -109,7 +109,7 @@ class ComplexationSimulator:
         axs.set_title("Сравнение погрешностей бортовой и комплексной системы", fontsize=14)
         axs.set_xlabel("t (время, с)", fontsize=9)
         axs.set_ylabel("$\epsilon$ (ошибка, м)", fontsize=9)
-        axs.legend(fontsize=8, loc='upper left')
+        axs.legend(fontsize=8)
         axs.grid(True)
 
         fig.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
