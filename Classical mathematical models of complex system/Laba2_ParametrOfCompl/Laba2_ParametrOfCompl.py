@@ -86,19 +86,33 @@ class ComplexationSimulator:
         Eq = E0 - q
         percent = (q / E0) * 100
 
+        # Вывод максимальной и средней ошибки определения координат положения БЛА без комплексирования и с ним.
+        max_errors_without = np.max(self.errors_without_correction)
+        max_errors_with = np.max(self.errors_with_correction)
+        mean_errors_without = np.sum(self.errors_without_correction) / len(self.errors_without_correction)
+        mean_errors_with = np.sum(self.errors_with_correction) / len(self.errors_with_correction)
+        print(f"Максимальная ошибка определения координат положения БЛА     [без комплексирования]: {max_errors_without:5f} м")
+        print(f"Максимальная ошибка определения координат положения БЛА     [с комплексированием ]: {max_errors_with:5f} м")
+        print(f"Среднее значение ошибки определения координат положения БЛА [без комплексирования]: {mean_errors_without:5f} м")
+        print(f"Среднее значение ошибки определения координат положения БЛА [с комплексированием ]: {mean_errors_with:5f} м")
+        print(f"Снижение максимальной ошибки определения координат положения БЛА: {100 - max_errors_with/max_errors_without * 100:5f}%")
+        print(f"Снижение средней ошибки определения координат положения БЛА     : {100 - mean_errors_with/mean_errors_without * 100:5f}%")
+        print()
+
+
         # Настройка отрисовки окна с графиками.
         fig, axs = subplots(1, 1, figsize=(12,6))
         fig.canvas.manager.set_window_title("Моделирование погрешности бортовой системы БЛА и комплексной системы")
         fig.suptitle(
-            f"Время полета={self.flight_duration} c, Период до появления спутника={self.GPS_period} с, "
-            f"Продолжительность видимости спутника={self.GPS_visible_duration} c, "
-            f"\nПараметр комплексирования k={self.k:.5f} c\u207B\u00B9, "
-            f"\nОшибка на начало комплексирования E0={E0:.3f} м, Запомненная ошибка q={q:.3f} м, "
-            f"\nОшибка после комплексирования Eq={Eq:.3f} м, Процент запомненной ошибки={percent:.2f}%",
+            f"Время полета: {self.flight_duration} c, Период до появления спутника: {self.GPS_period} с, "
+            f"Продолжительность видимости спутника: {self.GPS_visible_duration} c, "
+            f"\nПараметр комплексирования k={self.k:.5f} с$^{{-1}}$, "
+            f"\nОшибка на начало комплексирования $E_0={E0:.3f}$ м, Запомненная ошибка $q_0={q:.3f}$ м, "
+            f"\nОшибка после комплексирования $E_q={Eq:.3f}$ м, Процент запомненной ошибки: {percent:.2f}%",
             fontsize=12
         )
 
-        # Расчет значений.
+        # Временные шаги моделирования.
         t = [i for i in np.arange(0, self.flight_duration + self.dt, self.dt)]
 
         # Отрисовка графиков погрешностей и маркеров сравнительного анализа (один раз, чтобы не перегружать график).
@@ -120,18 +134,12 @@ class ComplexationSimulator:
 #-----------------# 
 if __name__ == "__main__":
     """ ЗАПУСК ПРОГРАММЫ """  
-    # Константы.
-    flight_duration = 60 * 60       # Время моделирования (мин -> c)
-    dt = 0.1                        # Шаг времени моделирования (с)
-    
-    # GPS.
-    GPS_period = 20 * 60            # Период видимости спутника (мин -> c)
-    GPS_visible_duration = 1 * 60   # Время видимости спутника (мин -> c)
-    
-    # Коэффициент квадратичного роста ошибки определения координат положения.
-    C = 0.001
-    
     # Моделирование.
-    error_simulator = ComplexationSimulator(flight_duration=flight_duration, GPS_period=GPS_period, GPS_visible_duration=GPS_visible_duration, 
-                                            accuracy=0.95, C=C, dt=dt)
+    # Запуск № 1.
+    error_simulator = ComplexationSimulator(flight_duration=60 * 60, GPS_period=59 * 60, GPS_visible_duration=1 * 60, 
+                                            accuracy=0.95, C=0.001, dt=0.1)
+    error_simulator.show_plot()
+    # Запуск № 2.
+    error_simulator = ComplexationSimulator(flight_duration=60 * 60, GPS_period=20 * 60, GPS_visible_duration=1 * 60, 
+                                            accuracy=0.95, C=0.001, dt=0.1)
     error_simulator.show_plot()
