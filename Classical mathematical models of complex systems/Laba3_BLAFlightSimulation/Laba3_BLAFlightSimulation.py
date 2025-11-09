@@ -20,7 +20,7 @@ class ExcelParser:
         return xls.sheet_names
 
     def _read_sheet(self, sheet_name=0):
-        """ Чтение данных с листа Excel """
+        """ Возвращает обработанный DataFrame для чтения указанного листа Excel с заголовками """
         df = pd.read_excel(self.filepath, sheet_name=sheet_name, header=None)   # Формирует DataFrame с листа с заголовками.
         df = df[pd.to_numeric(df.iloc[:, 0], errors='coerce').notna()]          # Фильтр на только числовые данные, остальне убираются.
         df = df.reset_index(drop=True)                                          # Заново расставляем индексы в данных.
@@ -313,15 +313,17 @@ class RealisticComplexation:
 #------------------------#
 class ModelManager:
     """ Управление симуляцией полета и вычисления ошибок определения координат положения (без комплексирования и с комплексированием (GPS))
-        - V_air                 : воздушная скорость БЛА;
-        - V_wind                : скорость ветра;
-        - K_angle               : курсовой угол БЛА;
-        - wind_angle            : угол ветра;
-        - A_angle               : угол атаки БЛА;
-        - GPS_period            : период до появления спутника (GPS);
-        - GPS_visible_duration  : время видимости спутника (GPS);
-        - Cx                    : коэффициент роста квадратичной зависимости ошибки определения положения координат БЛА от времени полета по долготе;
-        - Cy                    : коэффициент роста квадратичной зависимости ошибки определения положения координат БЛА от времени полета по широте;
+        - V_air                 : воздушная скорость БЛА (м/с);
+        - V_wind                : скорость ветра (м/с);
+        - K_angle               : курсовой угол БЛА (градусы);
+        - wind_angle            : угол ветра (градусы);
+        - A_angle               : угол атаки БЛА (градусы);
+        - GPS_period            : период до появления спутника (GPS) (с);
+        - GPS_visible_duration  : время видимости спутника (GPS) (с);
+        - accuracy              : точность (для запомненной ошибки);
+        Коэффициент роста квадратичной зависимости ошибки определения координат положения БЛА от времени полета (дрейф):
+        -*- Cx                  : коэффициент роста квадратичной зависимости ошибки определения положения координат БЛА от времени полета по долготе;
+        -*- Cy                  : коэффициент роста квадратичной зависимости ошибки определения положения координат БЛА от времени полета по широте;
         - flight_duration       : временной промежуток моделирования;
         - dt                    : временной шаг моделирования;
         - x_sp                  : координаты положения БЛА по GPS - долгота (м);
@@ -341,6 +343,18 @@ class ModelManager:
             self.BLA_errors = ComplexationSimulator(flight_duration, GPS_period, GPS_visible_duration, accuracy, Cx, dt)
         else:
             self.realistic_BLA_errors = RealisticComplexation(flight_duration, GPS_period, GPS_visible_duration, accuracy, Cx, Cy, dt)
+
+    def _compute_path(self, x, y):
+        """ Вычисление пройденного пути БЛА """
+        # Приведение к массивам NumPy.
+        x = np.array(x, dtype=float)
+        y = np.array(y, dtype=float)
+        # Вычисление.
+        dx = np.diff(x)              # приращения по долготе
+        dy = np.diff(y)              # приращения по широте
+        ds = np.sqrt(dx**2 + dy**2)  # пройденный путь в каждый момент времени
+        path = np.concatenate(([0], np.cumsum(ds))) # накопленный путь в каждый момент времени
+        return path
 
     def run(self):
         """ Реализация моделирования полета БЛА и расчета ошибок """
@@ -374,15 +388,19 @@ class ModelManager:
         fig.canvas.manager.set_window_title("Имитационная модель курсовой системы БЛА с комплексированием и без комплексирования")
         if self.x_sp is None and self.y_sp is None:
             fig.suptitle(
-                f"Время полета={self.BLA_flight.flight_duration} с, Скорость БЛА={self.BLA_flight.V_air} м/c,"
-                f"Период до появления спутника={self.BLA_errors.GPS_period} с, Продолжительность видимости спутника={self.BLA_errors.GPS_visible_duration} c, "
-                f"\nПараметр комплексирования k={self.BLA_errors.k:.5f} c\u207B\u00B9, "
-                f"Скорость ветра={self.BLA_flight.V_wind} м/с, Направление ветра={self.BLA_flight.wind_angle}\u00B0, "
-                f"\nКурсовой угол={self.BLA_flight.K_angle}\u00B0, Угол атаки={self.BLA_flight.A_angle}\u00B0, ",
+                f"Время полета: {self.BLA_flight.flight_duration} с, Скорость БЛА: {self.BLA_flight.V_air} м/c,"
+                f"Период до появления спутника: {self.BLA_errors.GPS_period} с, Продолжительность видимости спутника: {self.BLA_errors.GPS_visible_duration} c, "
+                f"\nПараметр комплексирования k: {self.BLA_errors.k:.5f} с$^{{-1}}$, "
+                f"Скорость ветра: {self.BLA_flight.V_wind} м/с, Направление ветра: {self.BLA_flight.wind_angle}\u00B0, "
+                f"\nКурсовой угол: {self.BLA_flight.K_angle}\u00B0, Угол атаки: {self.BLA_flight.A_angle}\u00B0, "
+                f"\nПроцент запомненной ошибки: {(1 - exp(-self.BLA_errors.k * self.BLA_errors.GPS_visible_duration)) * 100}%",
                 fontsize=12
             )
         else:
-            fig.suptitle(f"Исходные данные взяты из Excel: {excel_path} [Лист: {sheet_name}]", 
+            fig.suptitle(f"Исходные данные взяты из Excel: {excel_path} [Лист: {sheet_name}]"
+                         f"\n\nВремя полета = {self.BLA_flight.flight_duration} с, "
+                         f"Период видимости спутника: {self.realistic_BLA_errors.GPS_period} с, Время комплексирования: {self.realistic_BLA_errors.GPS_visible_duration} c, "
+                         f"\nПараметр комплексирования k: {self.realistic_BLA_errors.k:.5f} с$^{{-1}}$, Процент запомненной ошибки: {(1 - exp(-self.realistic_BLA_errors.k * self.realistic_BLA_errors.GPS_visible_duration)) * 100}%",
                          fontsize=12
             )
         
@@ -403,34 +421,59 @@ class ModelManager:
             y_without_corr = y
             x_with_corr = [x[i] + q_x[i] for i in range(len(x))]
             y_with_corr = [y[i] + q_y[i] for i in range(len(y))]
+
+        # Вывод.
+        print("Среднеквадратические ошибки определения координат положения БЛА:")
+        MSE_X_without_GPS = np.sqrt(np.mean((np.array(x_GPS) - np.array(x_without_corr)) ** 2))
+        MSE_Y_without_GPS = np.sqrt(np.mean((np.array(y_GPS) - np.array(y_without_corr)) ** 2))
+        MSE_X_with_GPS = np.sqrt(np.mean((np.array(x_GPS) - np.array(x_with_corr)) ** 2))
+        MSE_Y_with_GPS = np.sqrt(np.mean((np.array(y_GPS) - np.array(y_with_corr)) ** 2))
+        print(f"- Долгота [без комплексирования]: MSE = {MSE_X_without_GPS:5f} м")
+        print(f"- Широта  [без комплексирования]: MSE = {MSE_Y_without_GPS:5f} м")
+        print(f"- Долгота [с комплексированием]: MSE = {MSE_X_with_GPS:5f} м")
+        print(f"- Широта  [с комплексированием]: MSE = {MSE_Y_with_GPS:5f} м")
+        print(f"- Снижение MSE (долгота) : MSE = {100 - MSE_X_with_GPS/MSE_X_without_GPS * 100:5f}%")
+        print(f"- Снижение MSE  (широта) : MSE = {100 - MSE_Y_with_GPS/MSE_Y_without_GPS * 100:5f}%")
+        print()
+
+        print("Среднеквадратические ошибки вычисления пройденного пути БЛА:")
+        path_without_GPS = self._compute_path(x_without_corr, y_without_corr)
+        path_with_GPS = self._compute_path(x_with_corr, y_with_corr)
+        path_GPS = self._compute_path(x_GPS, y_GPS)
+        MSE_path_without_GPS = np.sqrt(np.mean((np.array(path_GPS) - np.array(path_without_GPS))**2))
+        MSE_path_with_GPS = np.sqrt(np.mean((np.array(path_GPS) - np.array(path_with_GPS))**2))
+        print(f"- [без комплексирования] MSE = {MSE_path_without_GPS:5f} м")
+        print(f"- [c комплексированием]  MSE = {MSE_path_with_GPS:5f} м")
+        print(f"- Снижение MSE: {100 - MSE_path_with_GPS/MSE_path_without_GPS * 100:5f}%")
+        print("\n")
         
-        # Траектория полета БЛА по спутнику/GPS + Траектории полета БЛА без комплексирования и с ним (долгота + время).
+        # Траектория полета БЛА + Траектории полета БЛА без комплексирования и с ним (долгота + время).
         axs[0, 0].plot(t, x_GPS, label="Траектория полета БЛА по спутнику/GPS", color='green')
         axs[0, 0].plot(t, x_without_corr, label="Траектория полета БЛА без комплексирования", color='red', linestyle='--')
         axs[0, 0].plot(t, x_with_corr, label="Траектория полета БЛА с комплексированием", color='blue', linestyle='--')
         axs[0, 0].set_title("Сравнение всех тректорий полета БЛА (долгота)", fontsize=10)
         axs[0, 0].set_xlabel("t (время, с)", fontsize=9)
-        axs[0, 0].set_ylabel("$W_\lambda$ (долгота, м)", fontsize=9)
+        axs[0, 0].set_ylabel("$\lambda$ (долгота, м)", fontsize=9)
         axs[0, 0].legend(fontsize=8)
         axs[0, 0].grid(True)
 
-        # Траектория полета БЛА по спутнику/GPS + Траектории полета БЛА без комплексирования и с ним (широта + время).
+        # Траектория полета БЛА + Траектории полета БЛА без комплексирования и с ним (широта + время).
         axs[0, 1].plot(t, y_GPS, label="Траектория полета БЛА по спутнику/GPS", color='green')
         axs[0, 1].plot(t, y_without_corr, label="Траектория полета БЛА без комплексирования", color='red', linestyle='--')
         axs[0, 1].plot(t, y_with_corr, label="Траектория полета БЛА с комплексированием", color='blue', linestyle='--')
         axs[0, 1].set_title("Сравнение всех тректорий полета БЛА (широта)", fontsize=10)
         axs[0, 1].set_xlabel("t (время, с)", fontsize=9)
-        axs[0, 1].set_ylabel("$W_\phi$ (широта, м)", fontsize=9)
+        axs[0, 1].set_ylabel("$\phi$ (широта, м)", fontsize=9)
         axs[0, 1].legend(fontsize=8)
         axs[0, 1].grid(True)
 
-        # Траектория полета БЛА по спутнику/GPS + Траектории полета БЛА без комплексирования и с ним (широта + долгота).
-        axs[1, 0].plot(x_GPS, y_GPS, label="Траектория полета БЛА по спутнику/GPS", color='green')
-        axs[1, 0].plot(x_without_corr, y_without_corr, label="Траектория полета БЛА без комплексирования", color='red', linestyle='--')
-        axs[1, 0].plot(x_with_corr, y_with_corr, label="Траектория полета БЛА с комплексированием", color='blue', linestyle='--')
-        axs[1, 0].set_title("Сравнение всех тректорий полета БЛА", fontsize=10)
-        axs[1, 0].set_xlabel("$W_\lambda$ (долгота, м)", fontsize=9)
-        axs[1, 0].set_ylabel("$W_\phi$ (широта, м)", fontsize=9)
+        # Траектория полета БЛА + Траектории полета БЛА без комплексирования и с ним (время + путь).
+        axs[1, 0].plot(t, path_GPS, label="Путь полета БЛА по спутнику/GPS", color='green')
+        axs[1, 0].plot(t, path_without_GPS, label="Путь полета БЛА без комплексирования", color='red', linestyle='--')
+        axs[1, 0].plot(t, path_with_GPS, label="Путь полета БЛА с комплексированием", color='blue', linestyle='--')
+        axs[1, 0].set_title("Сравнение всех путей полета БЛА", fontsize=10)
+        axs[1, 0].set_xlabel("t (время, с)", fontsize=9)
+        axs[1, 0].set_ylabel("s (путь, м)", fontsize=9)
         axs[1, 0].legend(fontsize=8)
         axs[1, 0].grid(True)
 
@@ -439,13 +482,13 @@ class ModelManager:
         axs[1, 1].plot(t, err_with_corr_x, label="Ошибка системы комплексирования (долгота)", color='blue', linestyle='-')
         axs[1, 1].plot(t, err_without_corr_y, label="Ошибка бортовой системы БЛА (широта)", color='green', linestyle=':')
         axs[1, 1].plot(t, err_with_corr_y, label="Ошибка системы комплексирования (широта)", color='orange', linestyle='--')
-        axs[1, 1].set_title("Сравнение ошибок с комплексированием и без", fontsize=10)
+        axs[1, 1].set_title("Сравнение погрешностей бортовой и комплексной системы", fontsize=10)
         axs[1, 1].set_xlabel("t (время, с)", fontsize=9)
         axs[1, 1].set_ylabel("$\epsilon$ (ошибка, м)", fontsize=9)
         axs[1, 1].legend(fontsize=8)
         axs[1, 1].grid(True)
         
-        fig.tight_layout(rect=[0.05, 0.05, 0.95, 0.95]) # left, bottom, right, top
+        fig.tight_layout(rect=[0, 0, 1, 1]) # left, bottom, right, top
         show()        
         
 #-----------------#
@@ -454,27 +497,10 @@ class ModelManager:
 if __name__ == "__main__":
     """ ЗАПУСК ПРОГРАММЫ """  
     # 1. Синтетические исходные данные.
-    # --- Инициализация ---
-    # Константы.
-    flight_duration = 60 * 60       # Время моделирования (мин -> c)
-    V_air = 100                     # Воздушная скорость БЛА (м/с)
-    V_wind = 25                     # Скорость ветра (м/с)
-    K_angle = 90                    # Курсовой угол БЛА (градусы)
-    wind_angle = 120                # Угол ветра (градусы)
-    A_angle = 3                     # Угол атаки (градусы)
-    dt = 0.1                        # Шаг времени моделирования (с)
-    
-    # GPS.
-    GPS_period = 20 * 60            # Период видимости спутника (мин -> c)
-    GPS_visible_duration = 1 * 60   # Время видимости спутника (мин -> c)
-    
-    # Коэффициент квадратичного роста ошибки определения координат положения.
-    C = 0.001
-    
     # --- Моделирование ---
-    sim_BLA = ModelManager(V_air=V_air, V_wind=V_wind, K_angle=K_angle, wind_angle=wind_angle, A_angle=A_angle,
-                           GPS_period=GPS_period, GPS_visible_duration=GPS_visible_duration, Cx=C, Cy=C,
-                           flight_duration=flight_duration, dt=dt)
+    sim_BLA = ModelManager(V_air=100, V_wind=25, K_angle=90, wind_angle=120, A_angle=3,
+                           GPS_period=20 * 60, GPS_visible_duration=1 * 60, Cx=0.001, Cy=0.001,
+                           flight_duration=60 * 60, dt=0.1)
 
     # 2. Экспериментальные данные.
     # --- Инициализация ---
