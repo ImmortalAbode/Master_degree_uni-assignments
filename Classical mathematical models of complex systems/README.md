@@ -2,7 +2,7 @@
   + Using two other libraries, coded by good people, by below links:
     - https://github.com/QtExcel/QXlsx - for using Excel in Qt;
     - https://www.qcustomplot.com/index.php/download - for drawing graphs in Qt.
-  + Regression analysis of the growth of the euro to ruble exchange rate, presented in the app.
+  + Regression analysis of the growth of the euro to ruble exchange rate.
   
   Lab2-3:
   + ParametrOfCompl - second lab for synthetic data (UAV on-board system and integration system error);
